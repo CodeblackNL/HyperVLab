@@ -51,7 +51,7 @@ else {
 [Version]$newVersion = "$major.$minor.$build.$revision"
 
 if ($latestModule -and $newVersion -lt $latestModule.Version) {
-    throw "Version not higher"
+    throw 'Version not higher'
 }
 
 Write-Host "Selected new version: '$newVersion' (current version: '$($latestModule.Version)')"
@@ -68,8 +68,8 @@ if ($publish.ToUpperInvariant() -in 'Y','YES') {
     if (-not (Test-Path $manifestFilePath)) {
         throw "Manifest file '$manifestFilePath' not found"
     }
-    $content = Get-Content -Path $manifestFilePath
-    $content = $content |% {
+    $originalContent = Get-Content -Path $manifestFilePath
+    $content = $originalContent |% {
         if ($_ -match '^ModuleVersion') {
             "ModuleVersion = '$newVersion'"
         }
@@ -81,4 +81,6 @@ if ($publish.ToUpperInvariant() -in 'Y','YES') {
 
     # publish the module
     Publish-Module -Path "$PSScriptRoot\..\src\$packageName" -Repository $repositoryName
+
+    Set-Content -Path $manifestFilePath -Value $originalContent
 }

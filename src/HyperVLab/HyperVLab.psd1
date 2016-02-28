@@ -11,13 +11,13 @@ Author = 'Jeroen Swart'
 RootModule = 'HyperVLab.psm1'
 
 # Version number of this module.
-ModuleVersion = '0.1.1.0'
+ModuleVersion = '0.0.0.0'
 
 # ID used to uniquely identify this module
 GUID = 'bbd0a9d3-8308-4e5b-9762-1cbc057dd1c4'
 
 # Company or vendor of this module
-CompanyName = 'blog.codeblack.nl'
+CompanyName = 'www.codeblack.nl'
 
 # Copyright statement for this module
 Copyright = '(c) Jeroen Swart 2016. All rights reserved.'
