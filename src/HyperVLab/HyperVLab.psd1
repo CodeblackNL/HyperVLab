@@ -11,7 +11,7 @@ Author = 'Jeroen Swart'
 RootModule = 'HyperVLab.psm1'
 
 # Version number of this module.
-ModuleVersion = '0.0.3'
+ModuleVersion = '0.1.1.0'
 
 # ID used to uniquely identify this module
 GUID = 'bbd0a9d3-8308-4e5b-9762-1cbc057dd1c4'
@@ -63,7 +63,7 @@ FormatsToProcess = @('ScriptAnalyzer.format.ps1xml')
 # NestedModules = @()
 
 # Functions to export from this module
-FunctionsToExport = '*'
+FunctionsToExport = 'Get-LabConfiguration','Get-LabVMConfiguration'
 
 # Cmdlets to export from this module
 #CmdletsToExport = @('Get-LabVM','New-LabVM')

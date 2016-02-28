@@ -1,31 +1,41 @@
-#
-# Script module for module 'HyperVLab'
-#
+#Requires -Version 4.0
 
-# Clear PSDefaultParameterValues in the module scope and enable strict mode
-$PSDefaultParameterValues.Clear()
-Set-StrictMode -Version Latest
-
-# Set up some helper variables to make it easier to work with the module
-$PSModule = $ExecutionContext.SessionState.Module
-$PSModuleRoot = $PSModule.ModuleBase
-
-## Import the appropriate nested binary module based on the current PowerShell version
-#$binaryModuleRoot = $PSModuleRoot
-#if ($PSVersionTable.PSVersion -lt [Version]'5.0') {
-#    $binaryModuleRoot = Join-Path -Path $PSModuleRoot -ChildPath 'PSv3'
-#}
-
-#$binaryModulePath = Join-Path -Path $binaryModuleRoot -ChildPath 'Microsoft.Windows.PowerShell.ScriptAnalyzer.dll'
-#$binaryModule = Import-Module -Name $binaryModulePath -PassThru
-#
-## When the module is unloaded, remove the nested binary module that was loaded with it
-#$PSModule.OnRemove = {
-#    Remove-Module -ModuleInfo $binaryModule
-#}
-
-function Get-LabConfiguration {
+Get-ChildItem "$PSScriptRoot\Internal" -Filter '*.ps1' |% {
+    . $_.FullName
 }
 
-function Get-LabVMConfiguration {
+Get-ChildItem "$PSScriptRoot\Functions" -Filter '*.ps1' |% {
+    . $_.FullName
 }
+
+
+<# DONE:
+
+Get-LabConfiguration
+Get-LabVMConfiguration
+Get-LabOSImage
+New-LabOSImage
+
+#>
+<# TODO:
+
+New-LabConfiguration
+  create a new lab-configuration-file from a template, some details will be filled in from provided parameters
+
+New-LabVM
+  create a new lab-VM based on a machine-configuration
+
+Remove-LabVM
+  delete an existing lab-VM, remove it from the AD, and clean up all VM-files
+
+Enter-LabVMSession
+  enter a remote session, based on machine-configuration
+
+New-Lab
+  create all machines for a lab based on a lab-configuration
+
+
+
+
+
+#>
