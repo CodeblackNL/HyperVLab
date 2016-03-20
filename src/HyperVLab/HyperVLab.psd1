@@ -54,16 +54,25 @@ PowerShellVersion = '4.0'
 # ScriptsToProcess = @()
 
 # Type files (.ps1xml) to be loaded when importing this module
-TypesToProcess = @('ScriptAnalyzer.types.ps1xml')
+#TypesToProcess = @('ScriptAnalyzer.types.ps1xml')
 
 # Format files (.ps1xml) to be loaded when importing this module
-FormatsToProcess = @('ScriptAnalyzer.format.ps1xml')
+#FormatsToProcess = @('ScriptAnalyzer.format.ps1xml')
 
 # Modules to import as nested modules of the module specified in RootModule/ModuleToProcess
 # NestedModules = @()
 
 # Functions to export from this module
-FunctionsToExport = 'Get-LabConfiguration','Get-LabVMConfiguration'
+FunctionsToExport = (
+    'Initialize-HyperVLab',
+    'Get-LabConfiguration',
+    'Get-LabVMConfiguration',
+    'Get-LabOSImage',
+    'New-LabOSImage',
+    'New-LabVM',
+    'Remove-LabVM',
+    'Enter-LabVMSession',
+    'Start-RemoteLogListener')
 
 # Cmdlets to export from this module
 #CmdletsToExport = @('Get-LabVM','New-LabVM')

@@ -1,21 +1,26 @@
 #Requires -Version 4.0
 <#
-        .SYNOPSIS
-        Retrieves the configuration of a single machine in a lab-environment.
-        .DESCRIPTION
-        Retrieves the configuration of a single machine in a lab-environment.
+.SYNOPSIS
+    Retrieves the configuration of a single machine in a lab-environment.
+.DESCRIPTION
+    Retrieves the configuration of a single machine in a lab-environment.
 
-        .PARAMETER Path
-        The path to a lab-environment configuration-file.
-        .PARAMETER LabConfiguration
-        An object describing a lab-environment configuration.
-        .PARAMETER MachineName
-        The name of the machine to retrieve the configuration for.
+.PARAMETER Path
+    The path to a lab-environment configuration-file.
+.PARAMETER Parameters
+    The parameters to pass to the lab-environment configuration-file.
+.PARAMETER LabConfiguration
+    An object describing a lab-environment configuration.
+.PARAMETER MachineName
+    The name of the machine to retrieve the configuration for.
 
-        .EXAMPLE
-        PS C:\> Get-LabConfiguration -Path 'D:\HyperV\Labs\CLDLAB\Configuration.ps1' -MachineName 'CLDLAB-DC'
-        .EXAMPLE
-        PS C:\> Get-LabConfiguration -LabConfiguration $labConfiguration -MachineName 'CLDLAB-DC'
+.EXAMPLE
+    PS C:\> Get-LabConfiguration -Path 'D:\HyperV\Labs\CLDLAB\Configuration.ps1' -MachineName 'CLDLAB-DC'
+.EXAMPLE
+    PS C:\> Get-LabConfiguration -LabConfiguration $labConfiguration -MachineName 'CLDLAB-DC'
+
+.NOTES
+    Copyright (c) 2016 Jeroen Swart. All rights reserved.
 #>
 function Get-LabVMConfiguration {
     param (
@@ -30,7 +35,7 @@ function Get-LabVMConfiguration {
     )
 
     if ($Path) {
-        if (-not (Test-Path $Path -PathType Leaf)) {
+        if (-not (Test-Path -Path $Path -PathType Leaf)) {
             throw 'The provided path to the configuration file does not exist.'
         }
 

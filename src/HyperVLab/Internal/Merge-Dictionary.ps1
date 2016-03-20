@@ -1,3 +1,5 @@
+#Requires -Version 4.0
+
 function Merge-Dictionary {
     param (
         [Parameter(Mandatory = $true)]
@@ -59,7 +61,7 @@ function Merge-Dictionary {
                             }
                         } | Where-Object { $_ -ne $null }
 
-                        $secondaryValue = New-Object object[] ($primaryArray.Length + $secondaryArray.Length)
+                        $secondaryValue = New-Object -TypeName object[] -ArgumentList ($primaryArray.Length + $secondaryArray.Length)
                         [Array]::Copy($primaryArray, $secondaryValue, $primaryArray.Length)
                         if ($secondaryArray) {
                             [Array]::Copy($secondaryArray, 0, $secondaryValue, $primaryArray.Length, $secondaryArray.Length)

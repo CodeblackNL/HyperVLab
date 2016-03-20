@@ -7,9 +7,9 @@ $repositoryName = 'LocalDev'
 # create the folder to hold the packages
 New-Item -Path $packagesPath -ItemType Directory -Force -ErrorAction Stop | Out-Null
 # register the folder as a package-source
-$packageSource = Get-PackageSource $repositoryName -ErrorAction SilentlyContinue
+$packageSource = Get-PackageSource -Name $repositoryName -ErrorAction SilentlyContinue
 if ($packageSource) {
-    Unregister-PackageSource $repositoryName | Out-Null
+    Unregister-PackageSource -Source $repositoryName | Out-Null
 }
 Register-PackageSource -Name $repositoryName -Location $packagesPath -ProviderName PowerShellGet -Trusted | Out-Null
 

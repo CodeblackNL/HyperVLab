@@ -1,15 +1,20 @@
 #Requires -Version 4.0
 <#
-        .SYNOPSIS
-        Retrieves the configuration of a complete lab-environment.
-        .DESCRIPTION
-        Retrieves the configuration of a complete lab-environment, as an array of machine-configurations.
+.SYNOPSIS
+    Retrieves the configuration of a complete lab-environment.
+.DESCRIPTION
+    Retrieves the configuration of a complete lab-environment, as an array of machine-configurations.
 
-        .PARAMETER Path
-        The path to a lab-environment configuration-file.
+.PARAMETER Path
+    The path to a lab-environment configuration-file.
+.PARAMETER Parameters
+    The parameters to pass to the lab-environment configuration-file.
 
-        .EXAMPLE
-        PS C:\> Get-LabConfiguration -Path 'D:\HyperV\Labs\CLDLAB\Configuration.ps1'
+.EXAMPLE
+    PS C:\> Get-LabConfiguration -Path 'D:\HyperV\Labs\CLDLAB\Configuration.ps1'
+
+.NOTES
+    Copyright (c) 2016 Jeroen Swart. All rights reserved.
 #>
 function Get-LabConfiguration {
     param (
@@ -19,7 +24,7 @@ function Get-LabConfiguration {
         [Hashtable]$Parameters
     )
 
-    if (-not (Test-Path $Path -PathType Leaf)) {
+    if (-not (Test-Path -Path $Path -PathType Leaf)) {
         throw 'The provided path to the configuration file does not exist.'
     }
     
@@ -37,10 +42,17 @@ function Get-LabConfiguration {
         throw 'Failed to load the lab-configuration from the provided path.'
     }
 
+    $labPath = Split-Path -Path $Path -Parent
+    if ((Split-Path -Path $labPath -Leaf) -eq 'configuration') {
+        $labPath = Split-Path -Path $labPath -Parent
+    }
+    
     $allNode = $configurationData | Where-Object { $_.MachineName -eq '*' }
     
     $labConfiguration = $configurationData | Where-Object { $_.MachineName -ne '*' } | ForEach-Object {
-        return Convert-ToObject -InputObject (Merge-Dictionary -Primary $allNode -Secondary $_)
+        $machineConfiguration = Convert-ToObject -InputObject (Merge-Dictionary -Primary $allNode -Secondary $_)
+        $machineConfiguration | Add-Member -MemberType NoteProperty -Name LabPath -Value $labPath
+        return $machineConfiguration
     }
     
     return $labConfiguration
