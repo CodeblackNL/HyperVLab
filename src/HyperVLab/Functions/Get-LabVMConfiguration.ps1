@@ -1,4 +1,4 @@
-#Requires -Version 4.0
+#Requires -Version 5.0
 <#
 .SYNOPSIS
     Retrieves the configuration of a single machine in a lab-environment.

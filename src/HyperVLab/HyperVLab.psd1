@@ -11,7 +11,7 @@ Author = 'Jeroen Swart'
 RootModule = 'HyperVLab.psm1'
 
 # Version number of this module.
-ModuleVersion = '0.0.0.0'
+ModuleVersion = '0.0.0.2'
 
 # ID used to uniquely identify this module
 GUID = 'bbd0a9d3-8308-4e5b-9762-1cbc057dd1c4'
@@ -26,7 +26,7 @@ Copyright = '(c) Jeroen Swart 2016. All rights reserved.'
 Description = 'HyperVLab provides functions for managing a Hyper-V Lab.'
 
 # Minimum version of the Windows PowerShell engine required by this module
-PowerShellVersion = '4.0'
+PowerShellVersion = '5.0'
 
 # Name of the Windows PowerShell host required by this module
 # PowerShellHostName = ''
@@ -63,16 +63,10 @@ PowerShellVersion = '4.0'
 # NestedModules = @()
 
 # Functions to export from this module
-FunctionsToExport = (
-    'Initialize-HyperVLab',
+FunctionsToExport = @(
     'Get-LabConfiguration',
-    'Get-LabVMConfiguration',
-    'Get-LabOSImage',
-    'New-LabOSImage',
-    'New-LabVM',
-    'Remove-LabVM',
-    'Enter-LabVMSession',
-    'Start-RemoteLogListener')
+    'Get-LabVMConfiguration'
+)
 
 # Cmdlets to export from this module
 #CmdletsToExport = @('Get-LabVM','New-LabVM')
@@ -93,11 +87,11 @@ AliasesToExport = '*'
 # Private data to pass to the module specified in RootModule/ModuleToProcess
 PrivateData = @{
     PSData = @{
-        Tags = 'HyperV lab'
-        LicenseUri = 'https://github.com/CodeblackNL/HyperVLab/blob/master/LICENSE'
         ProjectUri = 'https://github.com/CodeblackNL/HyperVLab'
-        IconUri = ''
-        ReleaseNotes = ''
+        LicenseUri = 'https://github.com/CodeblackNL/HyperVLab/blob/master/LICENSE'
+        Tags = 'Hyper-V','Lab','VM'
+#        IconUri = ''
+#        ReleaseNotes = ''
 #        ExternalModuleDependencies = @(@{ModuleName='PowerShellGet'; ModuleVersion='1.0.0.1'; Guid='1d73a601-4a6c-43c5-ba3f-619b18bbb404'})
 #        ExternalModuleDependencies = 'PowerShellGet'
     }
