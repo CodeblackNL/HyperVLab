@@ -24,6 +24,8 @@ function Get-LabConfiguration {
         [Hashtable]$Parameters
     )
 
+    $Path = [System.IO.Path]::GetFullPath($Path)
+
     if (-not (Test-Path -Path $Path -PathType Leaf)) {
         throw 'The provided path to the configuration file does not exist.'
     }
@@ -52,6 +54,7 @@ function Get-LabConfiguration {
     $labConfiguration = $configurationData | Where-Object { $_.MachineName -ne '*' } | ForEach-Object {
         $machineConfiguration = Convert-ToObject -InputObject (Merge-Dictionary -Primary $allNode -Secondary $_)
         $machineConfiguration | Add-Member -MemberType NoteProperty -Name LabPath -Value $labPath
+        $machineConfiguration | Add-Member -MemberType NoteProperty -Name ConfigurationPath -Value $Path
         return $machineConfiguration
     }
     

@@ -65,7 +65,10 @@ PowerShellVersion = '5.0'
 # Functions to export from this module
 FunctionsToExport = @(
     'Get-LabConfiguration',
-    'Get-LabVMConfiguration'
+    'Get-LabVMConfiguration',
+    'New-LabVM',
+    'Remove-LabVM',
+    'Enter-LabVMSession'
 )
 
 # Cmdlets to export from this module
