@@ -63,13 +63,15 @@ PowerShellVersion = '5.0'
 # NestedModules = @()
 
 # Functions to export from this module
-FunctionsToExport = @(
+FunctionsToExport = '*'
+<#FunctionsToExport = @(
     'Get-LabConfiguration',
     'Get-LabVMConfiguration',
     'New-LabVM',
     'Remove-LabVM',
     'Enter-LabVMSession'
 )
+#>
 
 # Cmdlets to export from this module
 #CmdletsToExport = @('Get-LabVM','New-LabVM')

@@ -3,7 +3,7 @@
 function New-LabVM {
     [CmdletBinding()]
     param (
-        [Parameter(Mandatory = $true)]
+        [Parameter(Mandatory = $true, Position = 0)]
         [PSCustomObject]$Configuration,
         [Parameter(Mandatory = $false)]
         [PSCredential]$Credential,
@@ -14,177 +14,6 @@ function New-LabVM {
         [Parameter(Mandatory = $false)]
         [Switch]$Connect = $false
     )
-
-    function Update-BootOrder {
-        param (
-            $VM,
-            [string]$MachineName,
-            [string]$BootDrivePath,
-            [switch]$BootDisk
-        )
-
-        if (!$VM -and $MachineName) {
-            $VM = Get-VM | Where-Object { $_.Name -eq $MachineName }
-        }
-
-        if ($VM) {
-            if (!$BootDrivePath -and $BootDisk) {
-                $BootDrivePath = (Get-VMHardDiskDrive -VMName $VM.Name  -ControllerNumber 0 -ControllerLocation 0).Path
-            }
-
-            if ($BootDrivePath) {
-                $bootOrder = (Get-VMFirmware -VM $VM).BootOrder
-                $bootDrive = $bootOrder | Where-Object { $_.BootType -eq 'Drive' -and $_.Device.Path -eq $BootDrivePath }
-                $newBootOrder = @()
-                $newBootOrder += $bootDrive
-                $newBootOrder += $bootOrder | Where-Object { $_ -ne $bootDrive }
-                Set-VMFirmware -VM $VM -BootOrder $newBootOrder
-            }
-        }
-    }
-
-    function Add-FilesIntoVirtualHardDisk {
-        param (
-            [Parameter(Mandatory = $true)]
-            [string]$Name,
-            [Parameter(Mandatory = $false)]
-            [Array]$FilesToCopy
-        )
-
-        if ($FilesToCopy -and $FilesToCopy.Length -gt 0) {
-            $vm = Get-VM -Name $Name
-            $vhd = $vm | Get-VMHardDiskDrive -ControllerNumber 0 -ControllerLocation 0
-
-            Write-Verbose -Message '- mounting virtual harddisk'
-            Mount-VHD -Path $vhd.Path -ErrorAction SilentlyContinue -ErrorVariable $var
-            $mountedVHD = Get-VHD -Path $vhd.Path
-
-            # if mounting the VHD failed, dismount the VHD and mount it again
-            if ((-not $mountedVHD) -or ($mountedVHD -and -not $mountedVHD.Attached)) {
-                Write-Verbose -Message '- mounting failed; attempting to dismount and mount it again'
-                try {
-                    Write-Verbose -Message '- dismounting virtual harddisk'
-                    Dismount-VHD -Path $vhd.Path
-                }
-                catch {
-                    Write-Warning -Message '- failed to dismount virtual harddisk'
-                }
-                Write-Verbose -Message '- mounting virtual harddisk'
-                Mount-VHD -Path $vhd.Path -ErrorAction SilentlyContinue
-                $mountedVHD = Get-VHD -Path $vhd.Path
-            }
-
-            try {
-                # retrieving the PS-drives appears to be needed for PS to be able to access the mounted VHD
-                Get-PSDrive | Out-Null
-
-                $mountedDrive = $mountedVHD | Get-Disk | Get-Partition | Get-Volume
-                $drivePath = "$($mountedDrive.DriveLetter):\"
-                Write-Verbose -Message "- mounted virtual harddisk as '$drivePath'"
-
-                foreach ($fileToCopy in $FilesToCopy) {
-                    $destinationPath = Join-Path -Path $drivePath -ChildPath $fileToCopy.Destination
-                    Write-Verbose -Message "- copying '$($fileToCopy.Source)' to '$destinationPath'"
-                    if ($fileToCopy.Source) {
-                        if (Test-Path -Path $fileToCopy.Source) {
-                            if (Test-Path -Path $fileToCopy.Source.TrimEnd('*') -PathType Container) {
-                                New-Item -Path $destinationPath -ItemType Directory -ErrorAction SilentlyContinue | Out-Null
-                            }
-                            else {
-                                New-Item -Path (Split-Path -Path $destinationPath) -ItemType Directory -ErrorAction SilentlyContinue | Out-Null
-                            }
-                            Copy-Item -Path $fileToCopy.Source -Destination $destinationPath -Force -Recurse -ErrorAction SilentlyContinue
-                        }
-                        else {
-                            Write-Host -Object "- Source '$($fileToCopy.Source)' not found" -ForegroundColor Red
-                        }
-                    }
-                    elseif ($fileToCopy.Content) {
-                        $destinationFolder = Split-Path -Path $destinationPath -Parent
-                        if (-not (Test-Path -Path $destinationFolder -PathType Container)) {
-                            New-Item -Path $destinationFolder -ItemType Directory -ErrorAction SilentlyContinue | Out-Null
-                        }
-                        $fileToCopy.Content | Out-File -FilePath $destinationPath -Force -Confirm:$false -Encoding ascii
-                    }
-                    else {
-                        Write-Host -Object "- Missing source and content; unable to copy file" -ForegroundColor Red
-                    }
-                }
-            }
-            finally {
-                Write-Verbose -Message '- dismounting virtual harddisk'
-                Dismount-VHD -Path $vhd.Path -ErrorAction SilentlyContinue
-            }
-        }
-    }
-
-    function Update-HostShares {
-        param (
-            [PSCustomObject]$Configuration
-        )
-
-        function EnsureUser {
-            param (
-                [string]$UserName,
-                [string]$Password
-            )
-
-            $rootPath = "WinNT://$($env:COMPUTERNAME)"
-            $userPath = "$rootPath/$UserName,User"
-            $user = [adsi]$userPath
-            if (-not $user.Path) {
-                Write-Verbose -Message "Creating user '$UserName'."
-                $user = ([adsi]$rootPath).Create('User', $UserName)
-                $user.SetPassword($Password)
-                $user.SetInfo()
-            }
-            else {
-                Write-Verbose -Message "Updating password for user '$UserName'."
-                $user.SetPassword($Password)
-                $user.SetInfo()
-            }
-        }
-
-        function EnsureShare {
-            param (
-                [string]$Name,
-                [string]$Path,
-                [string]$UserName
-            )
-
-            if (-not (Test-Path $Path -PathType Container)) {
-                Write-Verbose -Message "Creating share-folder '$Path'."
-                New-Item -Path $Path -ItemType Directory -Force
-            }
-
-            if (-not (Get-WmiObject -Class Win32_Share -Filter "name='$Name'")) {
-                 Write-Verbose -Message "Sharing folder '$Path' as '$Name'."
-                (Get-WmiObject -Class Win32_Share -List).Create($Path, $Name, 0) | Out-Null
-            }
-
-            Write-Verbose -Message "Ensuring folder '$Path' as '$Name'."
-            $acl = Get-Acl -Path $Path
-            if (-not ($acl.Access |? { $_.IdentityReference -match "$($UserName)$" })) {
-                Write-Verbose -Message "Allow access to share '$Name' by '$UserName'."
-                $accessRule = New-Object System.Security.AccessControl.FileSystemAccessRule $UserName,'FullControl','Allow'
-                $acl.SetAccessRule($accessRule)
-                Set-Acl -Path $Path -AclObject $acl
-            }
-        }
-
-        if ($Configuration -and $Configuration.Host -and $Configuration.Host.Shares) {
-            foreach ($share in $Configuration.Host.Shares) {
-                EnsureUser -UserName $share.UserName -Password $share.Password
-                if ($share.Path.StartsWith('.')) {
-                    $sharePath = [System.IO.Path]::GetFullPath((Join-Path -Path (Split-Path $Configuration.ConfigurationPath) -ChildPath $share.Path))
-                }
-                else {
-                    $sharePath = $share.Path
-                }
-                EnsureShare -Name $share.Name -Path $sharePath -UserName $share.UserName
-            }
-        }
-    }
 
     #region Validation
 
@@ -388,10 +217,6 @@ function New-LabVM {
 
     $filesToCopy = @(
         @{
-            Content = $configurationContent
-            Destination = 'Setup\configuration.json'
-        }
-        @{
             Content = $unattendContent
             Destination = 'unattend.xml'
         }
@@ -400,21 +225,34 @@ function New-LabVM {
             Destination = 'Windows\Setup\Scripts\SetupComplete.cmd'
         }
         @{
-            Source = "$PSScriptRoot\..\Files\Setup\*"
-            Destination = 'Setup'
+            Content = $configurationContent
+            Destination = 'Setup\configuration.json'
         }
         @{
             Source = "$PSScriptRoot\..\Files\ProviderAssemblies\*"
             Destination = 'Program Files\PackageManagement\ProviderAssemblies'
         }
         @{
-            #Source = "$($Configuration.LabPath)\..\..\Modules\*"
-            Source = "$PSScriptRoot\..\Files\Modules\*"
-            Destination = "Program Files\WindowsPowerShell\Modules"
+            Source = "$PSScriptRoot\..\Files\Setup\*"
+            Destination = 'Setup'
+        }
+        # files for all labs
+        @{
+            Source = "$($machineConfig.LabPath)\..\..\Files\Setup\*"
+            Destination = 'Setup'
         }
         @{
-            Source = "$($Configuration.LabPath)\..\..\Repository\*"
-            Destination = 'Setup\Repository'
+            Source = "$($machineConfig.LabPath)\..\..\Files\Modules\*"
+            Destination = 'Program Files\WindowsPowerShell\Modules'
+        }
+        # files for the current lab
+        @{
+            Source = "$($machineConfig.LabPath)\Files\Setup\*"
+            Destination = 'Setup'
+        }
+        @{
+            Source = "$($machineConfig.LabPath)\Files\Modules\*"
+            Destination = 'Program Files\WindowsPowerShell\Modules'
         }
     )
 
@@ -436,3 +274,4 @@ function New-LabVM {
 
 	Write-Verbose -Message "Finished creating lab-VM '$machineName'."
 }
+

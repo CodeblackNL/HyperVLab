@@ -18,9 +18,9 @@
 #>
 function Get-LabConfiguration {
     param (
-        [Parameter(Mandatory = $true)]
+        [Parameter(Mandatory = $true, Position = 0)]
         [string]$Path,
-        [parameter(Mandatory = $false)]
+        [parameter(Mandatory = $false, Position = 1)]
         [Hashtable]$Parameters
     )
 

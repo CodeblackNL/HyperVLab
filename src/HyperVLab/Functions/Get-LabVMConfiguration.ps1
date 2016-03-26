@@ -24,13 +24,13 @@
 #>
 function Get-LabVMConfiguration {
     param (
+        [Parameter(Mandatory = $true, Position = 0, ParameterSetName = 'Configuration')]
+        [PSCustomObject]$LabConfiguration,
         [Parameter(Mandatory = $true, ParameterSetName = 'Path')]
         [string]$Path,
         [Parameter(Mandatory = $false, ParameterSetName = 'Path')]
         [Hashtable]$Parameters,
-        [Parameter(Mandatory = $true, ParameterSetName = 'Configuration')]
-        [PSCustomObject]$LabConfiguration,
-        [Parameter(Mandatory = $true)]
+        [Parameter(Mandatory = $true, Position = 1)]
         [string]$MachineName
     )
 
