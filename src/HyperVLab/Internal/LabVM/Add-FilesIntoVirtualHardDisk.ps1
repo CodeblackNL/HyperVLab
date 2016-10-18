@@ -3,32 +3,29 @@
 function Add-FilesIntoVirtualHardDisk {
     param (
         [Parameter(Mandatory = $true)]
-        [string]$Name,
+        [string]$Path,
         [Parameter(Mandatory = $false)]
         [Array]$FilesToCopy
     )
 
     if ($FilesToCopy -and $FilesToCopy.Length -gt 0) {
-        $vm = Get-VM -Name $Name
-        $vhd = $vm | Get-VMHardDiskDrive -ControllerNumber 0 -ControllerLocation 0
-
         Write-Verbose -Message '- mounting virtual harddisk'
-        Mount-VHD -Path $vhd.Path -ErrorAction SilentlyContinue -ErrorVariable $var
-        $mountedVHD = Get-VHD -Path $vhd.Path
+        Mount-VHD -Path $Path -ErrorAction SilentlyContinue -ErrorVariable $var
+        $mountedVHD = Get-VHD -Path $Path
 
         # if mounting the VHD failed, dismount the VHD and mount it again
         if ((-not $mountedVHD) -or ($mountedVHD -and -not $mountedVHD.Attached)) {
             Write-Verbose -Message '- mounting failed; attempting to dismount and mount it again'
             try {
                 Write-Verbose -Message '- dismounting virtual harddisk'
-                Dismount-VHD -Path $vhd.Path
+                Dismount-VHD -Path $Path
             }
             catch {
                 Write-Warning -Message '- failed to dismount virtual harddisk'
             }
             Write-Verbose -Message '- mounting virtual harddisk'
-            Mount-VHD -Path $vhd.Path -ErrorAction SilentlyContinue
-            $mountedVHD = Get-VHD -Path $vhd.Path
+            Mount-VHD -Path $Path -ErrorAction SilentlyContinue
+            $mountedVHD = Get-VHD -Path $Path
         }
 
         try {
@@ -41,8 +38,8 @@ function Add-FilesIntoVirtualHardDisk {
 
             foreach ($fileToCopy in $FilesToCopy) {
                 $destinationPath = Join-Path -Path $drivePath -ChildPath $fileToCopy.Destination
-                Write-Verbose -Message "- copying '$($fileToCopy.Source)' to '$destinationPath'"
                 if ($fileToCopy.Source) {
+                    Write-Verbose -Message "- copying '$($fileToCopy.Source)' to '$destinationPath'"
                     if (Test-Path -Path $fileToCopy.Source) {
                         if (Test-Path -Path $fileToCopy.Source.TrimEnd('*') -PathType Container) {
                             New-Item -Path $destinationPath -ItemType Directory -ErrorAction SilentlyContinue | Out-Null
@@ -53,10 +50,11 @@ function Add-FilesIntoVirtualHardDisk {
                         Copy-Item -Path $fileToCopy.Source -Destination $destinationPath -Force -Recurse -ErrorAction SilentlyContinue
                     }
                     else {
-                        Write-Host -Object "- Source '$($fileToCopy.Source)' not found" -ForegroundColor DarkYellow
+                        Write-Warning -Message "  - source '$($fileToCopy.Source)' not found"
                     }
                 }
                 elseif ($fileToCopy.Content) {
+                    Write-Verbose -Message "- copying content to '$destinationPath'"
                     $destinationFolder = Split-Path -Path $destinationPath -Parent
                     if (-not (Test-Path -Path $destinationFolder -PathType Container)) {
                         New-Item -Path $destinationFolder -ItemType Directory -ErrorAction SilentlyContinue | Out-Null
@@ -64,13 +62,13 @@ function Add-FilesIntoVirtualHardDisk {
                     $fileToCopy.Content | Out-File -FilePath $destinationPath -Force -Confirm:$false -Encoding ascii
                 }
                 else {
-                    Write-Host -Object "- Missing source and content; unable to copy file" -ForegroundColor DarkYellow
+                    Write-Warning -Message "  - missing source and content; unable to copy file"
                 }
             }
         }
         finally {
             Write-Verbose -Message '- dismounting virtual harddisk'
-            Dismount-VHD -Path $vhd.Path -ErrorAction SilentlyContinue
+            Dismount-VHD -Path $Path -ErrorAction SilentlyContinue
         }
     }
 }
