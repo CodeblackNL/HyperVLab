@@ -22,8 +22,8 @@ function Convert-FromJsonObject {
                 ConfigurationName = $InputObject.ConfigurationName
                 CertificateFilePath = $InputObject.CertificateFilePath
                 CertificateThumbprint = $InputObject.CertificateThumbprint
+                Properties = Convert-PSObjectToHashtable -InputObject $InputObject.Properties
             }
-
             if ($InputObject.Host) {
                 $environment.Host = Convert-FromJsonObject -InputObject $InputObject.Host -TypeName 'LabHost'
             }
@@ -138,8 +138,22 @@ function Convert-FromJsonObject {
                 TimeZone = $InputObject.TimeZone
                 Role = $InputObject.Role
                 FilesPath = $InputObject.FilesPath
+                Properties = Convert-PSObjectToHashtable -InputObject $InputObject.Properties
                 Environment = $ParentObject
             }
+            $machine.AllProperties = New-Object Hashtable
+            if ($RootObject) {
+                foreach ($propertyKey in $RootObject.Properties.Keys) {
+                    $machine.AllProperties[$propertyKey] = $RootObject.Properties.$propertyKey
+                }
+            }
+            foreach ($propertyKey in $machine.Properties.Keys) {
+                $machine.AllProperties[$propertyKey] = $machine.Properties.$propertyKey
+            }
+            #if ($RootObject -and $RootObject.Properties) {
+            #    $RootObject.Properties.Keys |% { "$_: $($RootObject.Properties.$_)" }
+            #    $machine.AllProperties = Convert-PSObjectToHashtable -InputObject $InputObject.Properties
+            #}
             $machine.Hardware = ($RootObject.Hardware |? { $_.Name -eq $InputObject.Hardware } | Select -First 1)
             $machine.Disks = ($InputObject.Disks |% { Convert-FromJsonObject -InputObject $_ -TypeName 'LabDisk' -RootObject $RootObject })
             $machine.NetworkAdapters = ($InputObject.NetworkAdapters |% { Convert-FromJsonObject -InputObject $_ -TypeName 'LabNetworkAdapter' -RootObject $RootObject })

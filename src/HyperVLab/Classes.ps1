@@ -162,6 +162,8 @@ class LabMachine {
     [string]$TimeZone
     [string[]]$Role
     [string]$FilesPath
+    [Hashtable]$Properties
+    [Hashtable]$AllProperties
     [LabHardware]$Hardware
     [LabDisk[]]$Disks
     [LabNetworkAdapter[]]$NetworkAdapters
@@ -228,6 +230,7 @@ class LabEnvironment {
     [string]$ConfigurationName
     [string]$CertificateFilePath
     [string]$CertificateThumbprint
+    [Hashtable]$Properties
     [LabHost]$Host
     [LabHardware[]]$Hardware
     [LabOperationSystem[]]$OperatingSystems
