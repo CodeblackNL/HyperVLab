@@ -14,7 +14,6 @@ function Publish-LabConfiguration {
         [LabMachine[]]$Machine,
         [Parameter(Mandatory = $false)]
         [string]$OutputPath,
-
         [Parameter(Mandatory = $true, ParameterSetName = 'Environment_DscPullServer')]
         [Parameter(Mandatory = $true, ParameterSetName = 'EnvironmentName_DscPullServer')]
         [Parameter(Mandatory = $true, ParameterSetName = 'Machine_DscPullServer')]

@@ -17,6 +17,7 @@ function Convert-FromJsonObject {
             $environment = New-Object LabEnvironment -Property @{
                 Name = $InputObject.Name
                 Path = $InputObject.Path
+                MachinesPath = $InputObject.MachinesPath
                 FilesPath = $InputObject.FilesPath
                 ConfigurationFilePath = $InputObject.ConfigurationFilePath
                 ConfigurationName = $InputObject.ConfigurationName
@@ -71,7 +72,15 @@ function Convert-FromJsonObject {
                 Environment = $ParentObject
             }
             if ($InputObject.AdministratorPassword) {
-                $domain.AdministratorPassword = $InputObject.AdministratorPassword | ConvertTo-SecureString
+                try {
+                    if ($InputObject.AdministratorPasswordType -eq 'PlainText') {
+                        $domain.AdministratorPassword = ConvertTo-SecureString -String $InputObject.AdministratorPassword -AsPlainText -Force
+                    }
+                    else {
+                        $domain.AdministratorPassword = $InputObject.AdministratorPassword | ConvertTo-SecureString -ErrorAction SilentlyContinue
+                    }
+                }
+                catch { }
             }
             return $domain
         }
@@ -134,13 +143,24 @@ function Convert-FromJsonObject {
         'LabMachine' {
             $machine = New-Object LabMachine -Property @{
                 Name = $InputObject.Name
-                AdministratorPassword = $(if ($InputObject.AdministratorPassword) { $InputObject.AdministratorPassword | ConvertTo-SecureString })
                 TimeZone = $InputObject.TimeZone
                 Role = $InputObject.Role
                 FilesPath = $InputObject.FilesPath
                 Properties = Convert-PSObjectToHashtable -InputObject $InputObject.Properties
                 Environment = $ParentObject
             }
+            if ($InputObject.AdministratorPassword) {
+                try {
+                    if ($InputObject.AdministratorPasswordType -eq 'PlainText') {
+                        $machine.AdministratorPassword = ConvertTo-SecureString -String $InputObject.AdministratorPassword -AsPlainText -Force
+                    }
+                    else {
+                        $machine.AdministratorPassword = $InputObject.AdministratorPassword | ConvertTo-SecureString -ErrorAction SilentlyContinue
+                    }
+                }
+                catch { }
+            }
+
             $machine.AllProperties = New-Object Hashtable
             if ($RootObject) {
                 foreach ($propertyKey in $RootObject.Properties.Keys) {

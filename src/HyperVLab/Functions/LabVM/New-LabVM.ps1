@@ -76,7 +76,15 @@ function New-LabVM {
             Write-Verbose -Message "Creating lab-VM '$($m.Name)'"
 
             # determine path
-            $machinesPath = [System.IO.Path]::Combine($m.Environment.Path, 'Machines')
+            if ($m.Environment.MachinesPath) {
+                $machinesPath = $m.Environment.MachinesPath
+                if ($machinesPath.StartsWith('.')) {
+                    $machinesPath = [System.IO.Path]::GetFullPath((Join-Path -Path $m.Environment.Path -ChildPath $machinesPath))
+                }
+            }
+            else {
+                $machinesPath = [System.IO.Path]::Combine($m.Environment.Path, 'Machines')
+            }
 
             Write-Verbose -Message '- creating new VM'
             try {

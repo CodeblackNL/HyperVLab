@@ -11,7 +11,7 @@ Author = 'Jeroen Swart'
 RootModule = 'HyperVLab.psm1'
 
 # Version number of this module.
-ModuleVersion = '0.0.0.2'
+ModuleVersion = '0.1.0.0'
 
 # ID used to uniquely identify this module
 GUID = 'bbd0a9d3-8308-4e5b-9762-1cbc057dd1c4'
