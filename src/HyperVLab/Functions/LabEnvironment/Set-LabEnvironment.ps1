@@ -45,10 +45,24 @@ function Set-LabEnvironment
             }
 
             $update = $false
-            $parameters = 'MachinesPath','FilesPath','ConfigurationFilePath','ConfigurationName','Properties'
+            $parameters = 'MachinesPath','FilesPath','ConfigurationFilePath','ConfigurationName'
             foreach ($parameter in $parameters) {
                 if ($PSCmdlet.MyInvocation.BoundParameters.ContainsKey($parameter) -and $e.$parameter -ne $PSCmdlet.MyInvocation.BoundParameters.$parameter) {
                     $e.$parameter = $PSCmdlet.MyInvocation.BoundParameters.$parameter
+                    $update = $true
+                }
+            }
+            if ($Properties) {
+                if (-not $e.Properties) {
+                    $e.Properties = {}
+                }
+                foreach ($key in $Properties.Keys) {
+                    if ($Properties.$key -ne $null) {
+                        $e.Properties.$key = $Properties.$key
+                    }
+                    else {
+                        $e.Properties.Remove($key)
+                    }
                     $update = $true
                 }
             }

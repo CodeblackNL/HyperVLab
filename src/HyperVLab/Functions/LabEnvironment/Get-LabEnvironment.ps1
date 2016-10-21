@@ -33,9 +33,7 @@ function Get-LabEnvironment
         }
         if (Test-Path -Path $Path -PathType Leaf) {
             $environment = Convert-FromJsonObject -InputObject (Get-Content -Path $Path -Raw | ConvertFrom-Json) -TypeName 'LabEnvironment'
-            if ($environment.Path.StartsWith('.')) {
-                $environment.Path = [System.IO.Path]::GetFullPath((Join-Path -Path (Split-Path -Path $Path -Parent) -ChildPath $environment.Path))
-            }
+            $environment.Path = $Path
 
             Write-Output $environment
         }
