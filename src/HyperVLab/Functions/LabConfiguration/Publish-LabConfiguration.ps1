@@ -30,7 +30,7 @@ function Publish-LabConfiguration {
     )
 
     Process {
-        if ($($PSCmdlet.ParameterSetName) -eq 'EnvironmentName') {
+        if ($($PSCmdlet.ParameterSetName) -in 'EnvironmentName_DscPullServer','EnvironmentName_ComputerName') {
             if ($EnvironmentName) {
                 $Environment = Get-LabEnvironment -Name $EnvironmentName
             }
@@ -81,10 +81,19 @@ function Publish-LabConfiguration {
                 }
 
                 if (Test-Path -Path $configurationFilePath -PathType Leaf) {
-                    Write-Verbose "Preparing configuration"
+                    Write-Verbose "Loading configuration"
+                    try {
+                        . $configurationFilePath
+                    }
+                    catch {
+                        Write-Error $_
+                    }
+
+                    Write-Verbose "Preparing configuration-data"
                     $configurationData = @{
                         AllNodes = @($machines |% {
-                            $m = Convert-PSObjectToHashtable -InputObject $_
+                            #$m = Convert-PSObjectToHashtable -InputObject $_
+                            $m = $_.ToHashtable()
                             $m.NodeName = $_.Name
                             $m.PSDscAllowDomainUser = $true
                             $m
@@ -105,8 +114,6 @@ function Publish-LabConfiguration {
                         }
                     }
 
-                    Write-Verbose "Loading configuration"
-                    . $configurationFilePath
                     Write-Verbose "Generating MOF's"
                     . $e.ConfigurationName -ConfigurationData $configurationData -OutputPath $OutputPath | Out-Null
 
@@ -114,7 +121,6 @@ function Publish-LabConfiguration {
                     $content = get-content -Path $configurationFilePath -Encoding Ascii
                     $moduleNames = $content |% {
                         if ($_ -match 'Import[–-]DscResource [–-]ModuleName ''?(?<ModuleName>\w*)''?') {
-                        #if ($_ -match 'Import-DscResource -ModuleName ''?(?<ModuleName>\w*)''?') {
                             $Matches.ModuleName
                         }
                     }

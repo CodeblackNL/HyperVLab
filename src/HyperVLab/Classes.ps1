@@ -18,6 +18,15 @@ class LabOperationSystem {
             #ProductKey = $this.ProductKey
         }
     }
+
+    [Hashtable] ToHashtable() {
+        return @{
+            Name = $this.Name
+            FilePath = $this.FilePath
+            UnattendFilePath = $this.UnattendFilePath
+            ProductKey = $this.ProductKey
+        }
+    }
 }
 
 class LabHardware {
@@ -34,6 +43,16 @@ class LabHardware {
 
     [LabHardware] ToMachineConfiguration() {
         return New-Object LabHardware -Property @{
+            Name = $this.Name
+            ProcessorCount = $this.ProcessorCount
+            StartupMemory = $this.StartupMemory
+            MinimumMemory = $this.MinimumMemory
+            MaximumMemory = $this.MaximumMemory
+        }
+    }
+
+    [Hashtable] ToHashtable() {
+        return @{
             Name = $this.Name
             ProcessorCount = $this.ProcessorCount
             StartupMemory = $this.StartupMemory
@@ -60,6 +79,14 @@ class LabDomain {
             #AdministratorPassword = $this.AdministratorPassword
         }
     }
+
+    [Hashtable] ToHashtable() {
+        return @{
+            Name = $this.Name
+            NetbiosName = $this.NetbiosName
+            AdministratorPassword = $this.AdministratorPassword
+        }
+    }
 }
 
 class LabDnsServer {
@@ -67,6 +94,12 @@ class LabDnsServer {
 
     [string] ToString() {
         return $this.IPAddress
+    }
+
+    [Hashtable] ToHashtable() {
+        return @{
+            IPAddress = $this.IPAddress
+        }
     }
 }
 
@@ -82,6 +115,19 @@ class LabDhcpServer {
 
     [string] ToString() {
         return $this.IPAddress
+    }
+
+    [Hashtable] ToHashtable() {
+        return @{
+            IPAddress = $this.IPAddress
+            ScopeName = $this.ScopeName
+            ScopeId = $this.ScopeId
+            StartRange = $this.StartRange
+            EndRange = $this.EndRange
+            SubnetMask = $this.SubnetMask
+            LeaseDurationDays = $this.LeaseDurationDays
+            DefaultGateway = $this.DefaultGateway
+        }
     }
 }
 
@@ -112,6 +158,7 @@ class LabNetwork {
             PrefixLength = $this.PrefixLength
             HostIPAddress = $this.HostIPAddress
         }
+
         if ($this.Domain) {
             $network.Domain = $this.Domain.ToMachineConfiguration()
         }
@@ -119,6 +166,30 @@ class LabNetwork {
         $network.DhcpServer = $this.DhcpServer
 
         return $network
+    }
+
+    [Hashtable] ToHashtable() {
+        $hashtable = @{
+            Name = $this.Name
+            SwitchName = $this.SwitchName
+            SwitchType = $this.SwitchType
+            SwitchNetAdapterName = $this.SwitchNetAdapterName
+            AddressFamily = $this.AddressFamily
+            PrefixLength = $this.PrefixLength
+            HostIPAddress = $this.HostIPAddress
+        }
+
+        if ($this.Domain) {
+            $hashtable.Domain = $this.Domain.ToHashtable()
+        }
+        if ($this.DnsServer) {
+            $hashtable.DnsServer = $this.DnsServer.ToHashtable()
+        }
+        if ($this.DhcpServer) {
+            $hashtable.DhcpServer = $this.DhcpServer.ToHashtable()
+        }
+
+        return $hashtable
     }
 }
 
@@ -133,6 +204,19 @@ class LabNetworkAdapter {
             StaticMacAddress = $this.StaticMacAddress
             StaticIPAddress = $this.StaticIPAddress
         }
+    }
+
+    [Hashtable] ToHashtable() {
+        $hashtable = @{
+            StaticMacAddress = $this.StaticMacAddress
+            StaticIPAddress = $this.StaticIPAddress
+        }
+
+        if ($this.Network) {
+            $hashtable.Network = $this.Network.ToHashtable()
+        }
+
+        return $hashtable
     }
 }
 
@@ -153,6 +237,20 @@ class LabDisk {
         }
 
         return $disk
+    }
+
+    [Hashtable] ToHashtable() {
+        $hashtable = @{
+            DriveLetter = $this.DriveLetter
+            DifferencingDisk = $this.DifferencingDisk
+            Size = $this.Size
+        }
+
+        if ($this.OperatingSystem) {
+            $hashtable.OperatingSystem = $this.OperatingSystem.ToHashtable()
+        }
+
+        return $hashtable
     }
 }
 
@@ -179,6 +277,8 @@ class LabMachine {
             #AdministratorPassword = $this.AdministratorPassword
             TimeZone = $this.TimeZone
             Role = $this.Role
+            Properties = $this.Properties
+            AllProperties = $this.AllProperties
             Hardware = $this.Hardware.ToMachineConfiguration()
         }
         if ($this.Environment) {
@@ -196,6 +296,46 @@ class LabMachine {
 
         return $machine
     }
+
+    [Hashtable] ToHashtable() {
+        <#$hashtable = @{}
+        # ValueType     : add key/value
+        # Hashtable     : add key/value
+        # custom-object : add key/value.ToHashtable()
+
+        # exclude recursive properties
+        foreach ($property in $this.PSObject.Properties) {
+            $type = [Type]::GetType($property.TypeNameOfValue)
+            if ($type.IsValueType -or $type.FullName -eq 'System.String') {
+                $hashtable.($property.Name) = $($this.($property.Name))
+            }
+        }#>
+
+        $hashtable = @{
+            Name = $this.Name
+            AdministratorPassword = $this.AdministratorPassword
+            TimeZone = $this.TimeZone
+            Role = $this.Role
+            FilesPath = $this.FilesPath
+            Properties = $this.Properties
+            AllProperties = $this.AllProperties
+        }
+
+        if ($this.Hardware) {
+            $hashtable.Hardware = $this.Hardware.ToHashtable()
+        }
+        if ($this.Disks) {
+            $hashtable.Disks = @($this.Disks |% { $_.ToHashtable() })
+        }
+        if ($this.NetworkAdapters) {
+            $hashtable.NetworkAdapters = @($this.NetworkAdapters |% { $_.ToHashtable() })
+        }
+        if ($this.Environment) {
+            $hashtable.Environment = $this.Environment.ToHashtable()
+        }
+
+        return $hashtable
+    }
 }
 
 #class LabMachineTemplate : LabMachine {
@@ -211,6 +351,16 @@ class LabHostShare {
     [string] ToString() {
         return $this.Name
     }
+
+    [Hashtable] ToHashtable() {
+        return @{
+            Name = $this.Name
+            Path = $this.Path
+            DriveLetter = $this.DriveLetter
+            UserName = $this.UserName
+            Password = $this.Password
+        }
+    }
 }
 
 class LabHost {
@@ -219,6 +369,18 @@ class LabHost {
 
     [string] ToString() {
         return $this.Name
+    }
+
+    [Hashtable] ToHashtable() {
+        $hashtable = @{
+            Name = $this.Name
+        }
+
+        if ($this.Share) {
+            $hashtable.Share = $this.Share.ToHashtable()
+        }
+
+        return $hashtable
     }
 }
 
@@ -245,11 +407,31 @@ class LabEnvironment {
     [LabEnvironment] ToMachineConfiguration() {
         $environment = New-Object LabEnvironment -Property @{
             Name = $this.Name
+            Properties = $this.Properties
         }
         if ($this.Host) {
             $environment.Host = $this.Host
         }
 
         return $environment
+    }
+
+    [Hashtable] ToHashtable() {
+        $hashtable = @{
+            Name = $this.Name
+            Path = $this.Path
+            FilesPath = $this.FilesPath
+            ConfigurationFilePath = $this.ConfigurationFilePath
+            ConfigurationName = $this.ConfigurationName
+            CertificateFilePath = $this.CertificateFilePath
+            CertificateThumbprint = $this.CertificateThumbprint
+            Properties = $this.Properties
+        }
+
+        if ($this.Host) {
+            $hashtable.Host = $this.Host.ToHashtable()
+        }
+
+        return $hashtable
     }
 }

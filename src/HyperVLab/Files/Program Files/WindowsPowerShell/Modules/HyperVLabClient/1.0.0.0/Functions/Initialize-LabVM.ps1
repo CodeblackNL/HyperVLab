@@ -33,7 +33,7 @@ function Initialize-LabVM {
         }
         else {
             Write-Log "INFO" "Registering the package-source"
-            Register-PackageSource -Name $packageSourceName -Provider Chocolatey -Location $packageSourcePath -Trusted
+            Register-PackageSource -Name $packageSourceName -Provider Chocolatey -Location $packageSourcePath -Trusted | Out-Null
             # Register-PackageSource -Name chocolatey -Provider PowerShellGet -Location http://chocolatey.org/api/v2 -Trusted
 
             #choco source add -n="$packageSourceName" -s"$packageSourcePath"

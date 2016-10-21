@@ -27,13 +27,16 @@ function Remove-LabVM {
     }
 
     Process {
-        if ($($PSCmdlet.ParameterSetName) -ne 'Machine') {
+        if ($($PSCmdlet.ParameterSetName) -eq 'MachineName') {
             if ($MachineName) {
                 $Machine = Get-LabMachine -Name $MachineName
             }
             else {
                 $Machine = Get-LabMachine
             }
+        }
+        elseif ($($PSCmdlet.ParameterSetName) -eq 'Environment') {
+            $Machine = Get-LabMachine -Environment $Environment
         }
 
         if (-not $Machine) {
@@ -96,7 +99,7 @@ function Remove-LabVM {
                     }
                 }
                 else {
-                Write-Verbose -Message "Confirmation denied for removing '$($m.Name)'; skipped removing lab-VM"
+                    Write-Error -Message "Confirmation denied for removing '$($m.Name)'; skipped removing lab-VM"
                 }
             }
             else {
