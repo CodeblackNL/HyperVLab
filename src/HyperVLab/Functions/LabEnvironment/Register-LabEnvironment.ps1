@@ -47,6 +47,10 @@ function Register-LabEnvironment
         }
 
         if ($update) {
+            if (-not (Test-Path -Path (Split-Path -Path $filePath -Parent) -PathType Container)) {
+                New-Item -Path (Split-Path -Path $filePath -Parent) -ItemType Directory -Force
+            }
+
             $environments | ConvertTo-Json -Depth 9 | Out-File -FilePath $filePath
         }
  
