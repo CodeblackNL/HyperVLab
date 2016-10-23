@@ -10,8 +10,8 @@ class LabOperationSystem {
         return $this.Name
     }
 
-    [LabOperationSystem] ToMachineConfiguration() {
-        return New-Object LabOperationSystem -Property @{
+    [Hashtable] ToMachineConfiguration() {
+        return @{
             Name = $this.Name
             FilePath = $this.FilePath
             UnattendFilePath = $this.UnattendFilePath
@@ -41,14 +41,8 @@ class LabHardware {
         return $this.Name
     }
 
-    [LabHardware] ToMachineConfiguration() {
-        return New-Object LabHardware -Property @{
-            Name = $this.Name
-            ProcessorCount = $this.ProcessorCount
-            StartupMemory = $this.StartupMemory
-            MinimumMemory = $this.MinimumMemory
-            MaximumMemory = $this.MaximumMemory
-        }
+    [Hashtable] ToMachineConfiguration() {
+        return $this.ToHashtable()
     }
 
     [Hashtable] ToHashtable() {
@@ -72,11 +66,11 @@ class LabDomain {
         return $this.Name
     }
 
-    [LabDomain] ToMachineConfiguration() {
-        return New-Object LabDomain -Property @{
+    [Hashtable] ToMachineConfiguration() {
+        return @{
             Name = $this.Name
             NetbiosName = $this.NetbiosName
-            #AdministratorPassword = $this.AdministratorPassword
+            AdministratorPassword = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto([System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($this.AdministratorPassword))
         }
     }
 
@@ -94,6 +88,10 @@ class LabDnsServer {
 
     [string] ToString() {
         return $this.IPAddress
+    }
+
+    [Hashtable] ToMachineConfiguration() {
+        return $this.ToHashtable()
     }
 
     [Hashtable] ToHashtable() {
@@ -115,6 +113,10 @@ class LabDhcpServer {
 
     [string] ToString() {
         return $this.IPAddress
+    }
+
+    [Hashtable] ToMachineConfiguration() {
+        return $this.ToHashtable()
     }
 
     [Hashtable] ToHashtable() {
@@ -148,8 +150,8 @@ class LabNetwork {
         return $this.Name
     }
 
-    [LabNetwork] ToMachineConfiguration() {
-        $network = New-Object LabNetwork -Property @{
+    [Hashtable] ToMachineConfiguration() {
+        $hashtable = @{
             Name = $this.Name
             SwitchName = $this.SwitchName
             SwitchType = $this.SwitchType
@@ -160,12 +162,16 @@ class LabNetwork {
         }
 
         if ($this.Domain) {
-            $network.Domain = $this.Domain.ToMachineConfiguration()
+            $hashtable.Domain = $this.Domain.ToMachineConfiguration()
         }
-        $network.DnsServer = $this.DnsServer
-        $network.DhcpServer = $this.DhcpServer
+        if ($this.DnsServer) {
+            $hashtable.DnsServer = $this.DnsServer.ToMachineConfiguration()
+        }
+        if ($this.DhcpServer) {
+            $hashtable.DhcpServer = $this.DhcpServer.ToMachineConfiguration()
+        }
 
-        return $network
+        return $hashtable
     }
 
     [Hashtable] ToHashtable() {
@@ -198,12 +204,17 @@ class LabNetworkAdapter {
     [string]$StaticMacAddress
     [string]$StaticIPAddress
 
-    [LabNetworkAdapter] ToMachineConfiguration() {
-        return New-Object LabNetworkAdapter -Property @{
-            Network = $this.Network.ToMachineConfiguration()
+    [Hashtable] ToMachineConfiguration() {
+        $hashtable = @{
             StaticMacAddress = $this.StaticMacAddress
             StaticIPAddress = $this.StaticIPAddress
         }
+
+        if ($this.Network) {
+            $hashtable.Network = $this.Network.ToMachineConfiguration()
+        }
+
+        return $hashtable
     }
 
     [Hashtable] ToHashtable() {
@@ -227,18 +238,19 @@ class LabDisk {
     [bool]$UseEnvironmentCopy                  # optional; only valid if DifferencingDisk is true, otherwise ignored
     [long]$Size                                # mandatory if OperatingSystem not provided, otherwise ignored
 
-    [LabDisk] ToMachineConfiguration() {
-        $disk = New-Object LabDisk -Property @{
+    [Hashtable] ToMachineConfiguration() {
+        $hashtable = @{
             DriveLetter = $this.DriveLetter
             DifferencingDisk = $this.DifferencingDisk
             UseEnvironmentCopy = $this.UseEnvironmentCopy
             Size = $this.Size
         }
+
         if ($this.OperatingSystem) {
-            $disk.OperatingSystem = $this.OperatingSystem.ToMachineConfiguration()
+            $hashtable.OperatingSystem = $this.OperatingSystem.ToMachineConfiguration()
         }
 
-        return $disk
+        return $hashtable
     }
 
     [Hashtable] ToHashtable() {
@@ -274,30 +286,36 @@ class LabMachine {
         return $this.Name
     }
 
-    [LabMachine] ToMachineConfiguration() {
-        $machine = New-Object LabMachine -Property @{
+    [Hashtable] ToMachineConfiguration() {
+        $hashtable = @{
             Name = $this.Name
-            #AdministratorPassword = $this.AdministratorPassword
+            AdministratorPassword = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto([System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($this.AdministratorPassword))
             TimeZone = $this.TimeZone
-            Role = $this.Role
-            Properties = $this.Properties
-            AllProperties = $this.AllProperties
-            Hardware = $this.Hardware.ToMachineConfiguration()
-        }
-        if ($this.Environment) {
-            $machine.Environment = $this.Environment.ToMachineConfiguration()
-        }
-        if ($this.Role) {
-            $machine.Role = @($this.Role)
-        }
-        if ($this.Disks) {
-            $machine.Disks = @($this.Disks |% { $_.ToMachineConfiguration() })
-        }
-        if ($this.NetworkAdapters) {
-            $machine.NetworkAdapters = @($this.NetworkAdapters |% { $_.ToMachineConfiguration() })
         }
 
-        return $machine
+        if ($this.Role) {
+            $hashtable.Role = @($this.Role)
+        }
+        if ($this.Properties) {
+            $hashtable.Properties = $this.Properties
+        }
+        if ($this.AllProperties) {
+            $hashtable.AllProperties = $this.AllProperties
+        }
+        if ($this.Hardware) {
+            $hashtable.Hardware = $this.Hardware.ToMachineConfiguration()
+        }
+        if ($this.Disks) {
+            $hashtable.Disks = @($this.Disks |% { $_.ToMachineConfiguration() })
+        }
+        if ($this.NetworkAdapters) {
+            $hashtable.NetworkAdapters = @($this.NetworkAdapters |% { $_.ToMachineConfiguration() })
+        }
+        if ($this.Environment) {
+            $hashtable.Environment = $this.Environment.ToMachineConfiguration()
+        }
+
+        return $hashtable
     }
 
     [Hashtable] ToHashtable() {
@@ -318,12 +336,18 @@ class LabMachine {
             Name = $this.Name
             AdministratorPassword = $this.AdministratorPassword
             TimeZone = $this.TimeZone
-            Role = $this.Role
             FilesPath = $this.FilesPath
-            Properties = $this.Properties
-            AllProperties = $this.AllProperties
         }
 
+        if ($this.Role) {
+            $hashtable.Role = @($this.Role)
+        }
+        if ($this.Properties) {
+            $hashtable.Properties = $this.Properties
+        }
+        if ($this.AllProperties) {
+            $hashtable.AllProperties = $this.AllProperties
+        }
         if ($this.Hardware) {
             $hashtable.Hardware = $this.Hardware.ToHashtable()
         }
@@ -355,6 +379,16 @@ class LabHostShare {
         return $this.Name
     }
 
+    [Hashtable] ToMachineConfiguration() {
+        return @{
+            Name = $this.Name
+            Path = $this.Path
+            DriveLetter = $this.DriveLetter
+            UserName = $this.UserName
+            Password = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto([System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($this.Password))
+        }
+    }
+
     [Hashtable] ToHashtable() {
         return @{
             Name = $this.Name
@@ -372,6 +406,18 @@ class LabHost {
 
     [string] ToString() {
         return $this.Name
+    }
+
+    [Hashtable] ToMachineConfiguration() {
+        $hashtable = @{
+            Name = $this.Name
+        }
+
+        if ($this.Share) {
+            $hashtable.Share = $this.Share.ToMachineConfiguration()
+        }
+
+        return $hashtable
     }
 
     [Hashtable] ToHashtable() {
@@ -408,16 +454,19 @@ class LabEnvironment {
         return $this.Name
     }
 
-    [LabEnvironment] ToMachineConfiguration() {
-        $environment = New-Object LabEnvironment -Property @{
+    [Hashtable] ToMachineConfiguration() {
+        $hashtable = @{
             Name = $this.Name
-            Properties = $this.Properties
-        }
-        if ($this.Host) {
-            $environment.Host = $this.Host
         }
 
-        return $environment
+        if ($this.Properties) {
+            $hashtable.Properties = $this.Properties
+        }
+        if ($this.Host) {
+            $hashtable.Host = $this.Host.ToMachineConfiguration()
+        }
+
+        return $hashtable
     }
 
     [Hashtable] ToHashtable() {
