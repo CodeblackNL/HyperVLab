@@ -21,7 +21,9 @@ function Get-LabEnvironment
                         $environmentFilePath = Join-Path -Path $environmentFilePath -ChildPath 'environment.json'
                     }
                     if (Test-Path -Path $environmentFilePath -PathType Leaf) {
-                        Write-Output (Convert-FromJsonObject -InputObject (Get-Content -Path $environmentFilePath -Raw | ConvertFrom-Json) -TypeName 'LabEnvironment')
+                        $environment = Convert-FromJsonObject -InputObject (Get-Content -Path $environmentFilePath -Raw | ConvertFrom-Json) -TypeName 'LabEnvironment'
+                        $environment.Path = $environmentFilePath
+                        Write-Output $environment
                     }
                 }
             }
