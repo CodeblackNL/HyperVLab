@@ -52,7 +52,15 @@ function Convert-FromJsonObject {
                 UserName = $InputObject.UserName
             }
             if ($InputObject.Password) {
-                $hostShare.Password = $InputObject.Password | ConvertTo-SecureString
+                try {
+                    if ($InputObject.PasswordType -eq 'PlainText') {
+                        $hostShare.Password = ConvertTo-SecureString -String $InputObject.Password -AsPlainText -Force
+                    }
+                    else {
+                        $hostShare.Password = $InputObject.Password | ConvertTo-SecureString -ErrorAction SilentlyContinue
+                    }
+                }
+                catch { }
             }
             return $hostShare
         }
@@ -184,6 +192,7 @@ function Convert-FromJsonObject {
                 DriveLetter = $(if ($InputObject.OperatingSystem) { 'C' } else { $InputObject.DriveLetter })
                 Size = $(if ($InputObject.Size) { Invoke-expression -Command $InputObject.Size })
                 DifferencingDisk = $InputObject.DifferencingDisk
+                UseEnvironmentCopy = $InputObject.UseEnvironmentCopy
             }
             $disk.OperatingSystem = ($RootObject.OperatingSystems |? { $_.Name -eq $InputObject.OperatingSystem } | Select -First 1)
             return $disk

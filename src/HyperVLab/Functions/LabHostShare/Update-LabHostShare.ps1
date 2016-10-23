@@ -87,10 +87,11 @@ function Update-LabHostShare
                 return
             }
 
+            $labPath = Split-Path -Path $e.Path -Parent
             $share = $e.Host.Share
 
             if ($share.Path.StartsWith('.')) {
-                $sharePath = [System.IO.Path]::GetFullPath((Join-Path -Path $e.Path -ChildPath $Share.Path))
+                $sharePath = [System.IO.Path]::GetFullPath((Join-Path -Path $labPath -ChildPath $Share.Path))
             }
             else {
                 $sharePath = $share.Path

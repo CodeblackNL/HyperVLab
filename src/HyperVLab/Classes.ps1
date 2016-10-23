@@ -224,12 +224,14 @@ class LabDisk {
     [string]$DriveLetter                       # optional; always replaced with 'C' if OperatingSystem is provided
     [LabOperationSystem]$OperatingSystem       # optional
     [bool]$DifferencingDisk                    # optional; only valid if OperatingSystem is provided, otherwise ignored
+    [bool]$UseEnvironmentCopy                  # optional; only valid if DifferencingDisk is true, otherwise ignored
     [long]$Size                                # mandatory if OperatingSystem not provided, otherwise ignored
 
     [LabDisk] ToMachineConfiguration() {
         $disk = New-Object LabDisk -Property @{
             DriveLetter = $this.DriveLetter
             DifferencingDisk = $this.DifferencingDisk
+            UseEnvironmentCopy = $this.UseEnvironmentCopy
             Size = $this.Size
         }
         if ($this.OperatingSystem) {
@@ -243,6 +245,7 @@ class LabDisk {
         $hashtable = @{
             DriveLetter = $this.DriveLetter
             DifferencingDisk = $this.DifferencingDisk
+            UseEnvironmentCopy = $this.UseEnvironmentCopy
             Size = $this.Size
         }
 

@@ -71,6 +71,7 @@ function New-LabVM {
         foreach ($m in $Machine) {
             Write-Verbose -Message 'Starting creation of new lab-VM'
             $labName = $m.Environment.Name
+            $labPath = Split-Path -Path $m.Environment.Path -Parent
 
             # create new VM according to configuration
             Write-Verbose -Message "Creating lab-VM '$($m.Name)'"
@@ -79,11 +80,11 @@ function New-LabVM {
             if ($m.Environment.MachinesPath) {
                 $machinesPath = $m.Environment.MachinesPath
                 if ($machinesPath.StartsWith('.')) {
-                    $machinesPath = [System.IO.Path]::GetFullPath((Join-Path -Path $m.Environment.Path -ChildPath $machinesPath))
+                    $machinesPath = [System.IO.Path]::GetFullPath((Join-Path -Path $labPath -ChildPath $machinesPath))
                 }
             }
             else {
-                $machinesPath = [System.IO.Path]::Combine($m.Environment.Path, 'Machines')
+                $machinesPath = [System.IO.Path]::Combine($labPath, 'Machines')
             }
 
             Write-Verbose -Message '- creating new VM'
@@ -117,7 +118,7 @@ function New-LabVM {
                     $diskPath = $null
                     if ($disk.OperatingSystem) {
                         if ($disk.OperatingSystem.FilePath.StartsWith('.')) {
-                            $osPath = [System.IO.Path]::GetFullPath((Join-Path -Path $m.Environment.Path -ChildPath $disk.OperatingSystem.FilePath))
+                            $osPath = [System.IO.Path]::GetFullPath((Join-Path -Path $labPath -ChildPath $disk.OperatingSystem.FilePath))
                         }
                         else {
                             $osPath = $disk.OperatingSystem.FilePath
@@ -125,11 +126,16 @@ function New-LabVM {
                         $diskPath = [System.IO.Path]::Combine($pathHDDs, "$($vm.Name).vhdx")
                         Write-Verbose -Message "  - creating OS disk at '$diskPath' from '$($osPath)'"
                         if ($disk.DifferencingDisk) {
-                            $diskParentPath = [System.IO.Path]::Combine($machinesPath, '_BaseDisks', [System.IO.Path]::GetFileName($osPath))
-                            Write-Verbose -Message "    - ensuring base-disk for differencing disk ($diskParentPath)"
-                            if (-not (Test-Path -Path $diskParentPath)) {
-                                New-Item -Path ([System.IO.Path]::GetDirectoryName($diskParentPath)) -ItemType Directory -ErrorAction SilentlyContinue | Out-Null
-                                Copy-Item -Path $osPath -Destination $diskParentPath
+                            if ($disk.UseEnvironmentCopy) {
+                                $diskParentPath = [System.IO.Path]::Combine($machinesPath, '_BaseDisks', [System.IO.Path]::GetFileName($osPath))
+                                Write-Verbose -Message "    - ensuring base-disk for differencing disk ($diskParentPath)"
+                                if (-not (Test-Path -Path $diskParentPath)) {
+                                    New-Item -Path ([System.IO.Path]::GetDirectoryName($diskParentPath)) -ItemType Directory -ErrorAction SilentlyContinue | Out-Null
+                                    Copy-Item -Path $osPath -Destination $diskParentPath
+                                }
+                            }
+                            else {
+                                $diskParentPath = $osPath
                             }
 
                             Write-Verbose -Message '    - creating differencing disk'
@@ -183,8 +189,8 @@ function New-LabVM {
                         }
                         if ($network.HostIPAddress) {
                             $interfaceAlias = "vEthernet ($($network.SwitchName))"
-                            $netIPAddress = Get-NetAdapter $interfaceAlias | Get-NetIPAddress -AddressFamily IPv4
-                            if (-not $netIPAddress -or ($netIPAddress.IPAddress -ne $network.HostIPAddress)) {
+                            $netIPAddress = Get-NetAdapter $interfaceAlias | Get-NetIPAddress -AddressFamily IPv4 -IPAddress $network.HostIPAddress -ErrorAction SilentlyContinue
+                            if (-not $netIPAddress) {
                                 New-NetIPAddress –InterfaceAlias $interfaceAlias –IPAddress $network.HostIPAddress –PrefixLength $network.PrefixLength
                             }
                             elseif ($netIPAddress.PrefixLength -ne $network.PrefixLength) {
@@ -216,7 +222,7 @@ function New-LabVM {
             if ($unattendTemplateFilePath) {
                 Write-Verbose -Message '- generating unattend file'
                 if ($unattendTemplateFilePath.StartsWith('.')) {
-                    $unattendTemplateFilePath = [System.IO.Path]::GetFullPath((Join-Path -Path $m.Environment.Path -ChildPath $unattendTemplateFilePath))
+                    $unattendTemplateFilePath = [System.IO.Path]::GetFullPath((Join-Path -Path $labPath -ChildPath $unattendTemplateFilePath))
                 }
                 $administratorPassword = $null
                 if ($m.AdministratorPassword) {
@@ -231,23 +237,6 @@ function New-LabVM {
                     AdministratorPassword = $administratorPassword
                 }
             }
-            <#
-            $unattendFilePath = Join-Path -Path (Split-Path -Path $osDiskImagePath) -ChildPath $Configuration.OperatingSystem.UnattendFile
-            Write-Verbose -Message "- using unattend-file '$unattendFilePath'"
-            $unattendContent = Get-Content -Path $unattendFilePath
-            $unattendContent = $unattendContent -replace '{ComputerName}',$machineName
-            $unattendContent = $unattendContent -replace '{ProductKey}',$Configuration.OperatingSystem.ProductKey
-            $timeZone = $Configuration.OperatingSystem.TimeZone
-            if (-not $timeZone) {
-                $timeZone = 'W. Europe Standard Time'
-            }
-            $unattendContent = $unattendContent -replace '{TimeZone}',$timeZone
-
-            if ($Configuration.AdministratorPassword) {
-                $administratorPassword = [System.Convert]::ToBase64String([System.Text.Encoding]::Unicode.GetBytes("$($Configuration.AdministratorPassword)AdministratorPassword"))
-            }
-            $unattendContent = $unattendContent -replace '{AdministratorPassword}',$administratorPassword
-            #>
 
             Write-Verbose -Message '- inserting files into virtual harddisk'
             $configurationContent = (ConvertTo-Json -InputObject $m.ToMachineConfiguration() -Depth 9)
@@ -268,7 +257,7 @@ function New-LabVM {
             )
             if ($m.Environment.FilesPath) {
                 if ($m.Environment.FilesPath.StartsWith('.')) {
-                    $filesPath = [System.IO.Path]::GetFullPath((Join-Path -Path $m.Environment.Path -ChildPath $m.Environment.FilesPath))
+                    $filesPath = [System.IO.Path]::GetFullPath((Join-Path -Path $labPath -ChildPath $m.Environment.FilesPath))
                 }
                 else {
                     $filesPath = $m.Environment.FilesPath
@@ -281,7 +270,7 @@ function New-LabVM {
             }
             if ($m.FilesPath) {
                 if ($m.FilesPath.StartsWith('.')) {
-                    $filesPath = [System.IO.Path]::GetFullPath((Join-Path -Path $m.Environment.Path -ChildPath $m.FilesPath))
+                    $filesPath = [System.IO.Path]::GetFullPath((Join-Path -Path $labPath -ChildPath $m.FilesPath))
                 }
                 else {
                     $filesPath = $m.FilesPath
