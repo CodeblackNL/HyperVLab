@@ -1,4 +1,7 @@
-class LabOperationSystem {
+class LabObject {
+}
+
+class LabOperationSystem : LabObject {
     [string]$Name
     [string]$FilePath
     [string]$UnattendFilePath
@@ -29,7 +32,7 @@ class LabOperationSystem {
     }
 }
 
-class LabHardware {
+class LabHardware : LabObject {
     [string]$Name
     [int]$ProcessorCount
     [long]$StartupMemory
@@ -56,7 +59,7 @@ class LabHardware {
     }
 }
 
-class LabDomain {
+class LabDomain : LabObject {
     [string]$Name
     [string]$NetbiosName
     [SecureString]$AdministratorPassword
@@ -83,7 +86,7 @@ class LabDomain {
     }
 }
 
-class LabDnsServer {
+class LabDnsServer : LabObject {
     [string]$IPAddress
 
     [string] ToString() {
@@ -101,7 +104,7 @@ class LabDnsServer {
     }
 }
 
-class LabDhcpServer {
+class LabDhcpServer : LabObject {
     [string]$IPAddress
     [string]$ScopeName
     [string]$ScopeId
@@ -133,7 +136,7 @@ class LabDhcpServer {
     }
 }
 
-class LabNetwork {
+class LabNetwork : LabObject {
     [string]$Name
     [string]$SwitchName
     [string]$SwitchType                # Internal, External
@@ -199,7 +202,7 @@ class LabNetwork {
     }
 }
 
-class LabNetworkAdapter {
+class LabNetworkAdapter : LabObject {
     [LabNetwork]$Network
     [string]$StaticMacAddress
     [string]$StaticIPAddress
@@ -231,7 +234,7 @@ class LabNetworkAdapter {
     }
 }
 
-class LabDisk {
+class LabDisk : LabObject {
     [string]$DriveLetter                       # optional; always replaced with 'C' if OperatingSystem is provided
     [LabOperationSystem]$OperatingSystem       # optional
     [bool]$DifferencingDisk                    # optional; only valid if OperatingSystem is provided, otherwise ignored
@@ -269,7 +272,7 @@ class LabDisk {
     }
 }
 
-class LabMachine {
+class LabMachine : LabObject {
     [string]$Name
     [SecureString]$AdministratorPassword
     [string]$TimeZone
@@ -368,7 +371,7 @@ class LabMachine {
 #class LabMachineTemplate : LabMachine {
 #}
 
-class LabHostShare {
+class LabHostShare : LabObject {
     [string]$Name
     [string]$Path
     [string]$DriveLetter
@@ -380,13 +383,18 @@ class LabHostShare {
     }
 
     [Hashtable] ToMachineConfiguration() {
-        return @{
+        $hashtable = @{
             Name = $this.Name
             Path = $this.Path
             DriveLetter = $this.DriveLetter
             UserName = $this.UserName
-            Password = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto([System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($this.Password))
         }
+
+        if ($this.Password) {
+            $hashtable.Password = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto([System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($this.Password))
+        }
+
+        return $hashtable
     }
 
     [Hashtable] ToHashtable() {
@@ -400,7 +408,7 @@ class LabHostShare {
     }
 }
 
-class LabHost {
+class LabHost : LabObject {
     [string]$Name
     [LabHostShare]$Share
 
@@ -433,7 +441,7 @@ class LabHost {
     }
 }
 
-class LabEnvironment {
+class LabEnvironment : LabObject {
     [string]$Name
     [string]$Path
     [string]$TokensFilePath

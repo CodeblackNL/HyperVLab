@@ -73,10 +73,10 @@ function Publish-LabConfiguration {
             $certificateFilePath = $e.CertificateFilePath
             if ($configurationFilePath -and $e.ConfigurationName) {
                 if ($configurationFilePath.StartsWith('.')) {
-                    $configurationFilePath = [System.IO.Path]::GetFullPath((Join-Path -Path $e.Path -ChildPath $configurationFilePath))
+                    $configurationFilePath = [System.IO.Path]::GetFullPath((Join-Path -Path (Split-Path -Path $e.Path -Parent) -ChildPath $configurationFilePath))
                 }
                 if ($certificateFilePath.StartsWith('.')) {
-                    $certificateFilePath = [System.IO.Path]::GetFullPath((Join-Path -Path $e.Path -ChildPath $certificateFilePath))
+                    $certificateFilePath = [System.IO.Path]::GetFullPath((Join-Path -Path (Split-Path -Path $e.Path -Parent) -ChildPath $certificateFilePath))
                 }
 
                 if (Test-Path -Path $configurationFilePath -PathType Leaf) {
