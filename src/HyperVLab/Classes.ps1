@@ -436,6 +436,7 @@ class LabHost {
 class LabEnvironment {
     [string]$Name
     [string]$Path
+    [string]$TokensFilePath
     [string]$MachinesPath
     [string]$FilesPath
     [string]$ConfigurationFilePath
@@ -473,6 +474,7 @@ class LabEnvironment {
         $hashtable = @{
             Name = $this.Name
             Path = $this.Path
+            TokensFilePath = $this.TokensFilePath
             MachinesPath = $this.MachinesPath
             FilesPath = $this.FilesPath
             ConfigurationFilePath = $this.ConfigurationFilePath

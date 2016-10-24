@@ -17,6 +17,7 @@ function Convert-FromJsonObject {
             $environment = New-Object LabEnvironment -Property @{
                 Name = $InputObject.Name
                 Path = $InputObject.Path
+                TokensFilePath = $InputObject.TokensFilePath
                 MachinesPath = $InputObject.MachinesPath
                 FilesPath = $InputObject.FilesPath
                 ConfigurationFilePath = $InputObject.ConfigurationFilePath
@@ -33,6 +34,7 @@ function Convert-FromJsonObject {
             $environment.Domains = $InputObject.Domains |% { Convert-FromJsonObject -InputObject $_ -TypeName 'LabDomain' -ParentObject $environment }
             $environment.Networks = $InputObject.Networks |% { Convert-FromJsonObject -InputObject $_ -TypeName 'LabNetwork' -RootObject $environment -ParentObject $environment }
             $environment.Machines = $InputObject.Machines |% { Convert-FromJsonObject -InputObject $_ -TypeName 'LabMachine' -RootObject $environment -ParentObject $environment }
+            
             return $environment
         }
         'LabHost' {
