@@ -19,6 +19,10 @@ function Register-LabEnvironment
             if (-not $Path) {
                 throw 'Provide a path to the environment.'
             }
+            if (Test-Path -Path $Path -PathType Container) {
+                Write-Verbose "path '$Path' is folder, assuming filename is missing"
+                $Path = Join-Path -Path $Path -ChildPath 'environment.json'
+            }
             if (-not (Test-Path -Path $Path -PathType Leaf)) {
                 throw 'The provided path does not reference an existing environment-file.'
             }
@@ -48,7 +52,7 @@ function Register-LabEnvironment
 
         if ($update) {
             if (-not (Test-Path -Path (Split-Path -Path $filePath -Parent) -PathType Container)) {
-                New-Item -Path (Split-Path -Path $filePath -Parent) -ItemType Directory -Force
+                New-Item -Path (Split-Path -Path $filePath -Parent) -ItemType Directory -Force | Out-Null
             }
 
             $environments | ConvertTo-Json -Depth 9 | Out-File -FilePath $filePath

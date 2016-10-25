@@ -200,7 +200,9 @@ function New-LabVM {
 
                         Write-Verbose -Message "  - adding network '$($network.Name)'"
                         Add-VMNetworkAdapter -VM $vm -Name $network.Name -SwitchName $network.SwitchName
-                        Set-VMNetworkAdapter -VM $vm -Name $network.Name -DeviceNaming On
+                        if ([System.Environment]::OSVersion.Version.Major -ge 10) {
+                            Set-VMNetworkAdapter -VM $vm -Name $network.Name -DeviceNaming On
+                        }
                         if ($networkAdapter.StaticMacAddress) {
                             Set-VMNetworkAdapter -VM $vm -Name $network.Name -StaticMacAddress ($networkAdapter.StaticMacAddress).Replace('-', '')
                         }
