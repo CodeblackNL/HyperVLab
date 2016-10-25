@@ -11,7 +11,7 @@ Author = 'Jeroen Swart'
 RootModule = 'HyperVLab.psm1'
 
 # Version number of this module.
-ModuleVersion = '0.1.0.0'
+ModuleVersion = '0.0.0.0'
 
 # ID used to uniquely identify this module
 GUID = 'bbd0a9d3-8308-4e5b-9762-1cbc057dd1c4'
@@ -44,7 +44,7 @@ PowerShellVersion = '5.0'
 # ProcessorArchitecture = ''
 
 # Modules that must be imported into the global environment prior to importing this module
-#RequiredModules = @(@{ModuleName='PowerShellGet'; ModuleVersion='1.0.0.1'; Guid='1d73a601-4a6c-43c5-ba3f-619b18bbb404'})
+#RequiredModules = @(@{ModuleName='PowerShellGet'; ModuleVersion='0.0.0.1'})
 #RequiredModules = 'PowerShellGet'
 
 # Assemblies that must be loaded prior to importing this module
@@ -97,7 +97,7 @@ PrivateData = @{
         Tags = 'Hyper-V','Lab','VM'
 #        IconUri = ''
 #        ReleaseNotes = ''
-#        ExternalModuleDependencies = @(@{ModuleName='PowerShellGet'; ModuleVersion='1.0.0.1'; Guid='1d73a601-4a6c-43c5-ba3f-619b18bbb404'})
+#        ExternalModuleDependencies = @(@{ModuleName='PowerShellGet'; ModuleVersion='0.0.0.1'})
 #        ExternalModuleDependencies = 'PowerShellGet'
     }
 }

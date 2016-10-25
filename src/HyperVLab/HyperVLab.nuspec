@@ -7,7 +7,6 @@
     <owners>Codeblack</owners>
     <copyright>(c) Jeroen Swart 2016. All rights reserved.</copyright>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
-
     <description>Module for quickly &amp; easily creating lab environments using Hyper-V.</description>
     <projectUrl>http://github.com/contoso/UsefulStuff</projectUrl>
     <tags>
@@ -29,15 +28,12 @@
     </tags>
     <releaseNotes />
   </metadata>
-
   <files>
     <file src="Files\**\*.*" target="Files" />
     <file src="Functions\**\*.*" target="Functions" />
     <file src="Internal\**\*.*" target="Internal" />
     <file src="Classes.ps1" target="" />
-
     <file src="HyperVLab.psd1" target="" />
     <file src="HyperVLab.psm1" target="" />
   </files>
 </package>
-
