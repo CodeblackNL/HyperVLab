@@ -1,0 +1,43 @@
+<?xml version="1.0"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
+  <metadata>
+    <id>HyperVLab</id>
+    <version>0.0.0.0</version>
+    <authors>Jeroen Swart</authors>
+    <owners>Codeblack</owners>
+    <copyright>(c) Jeroen Swart 2016. All rights reserved.</copyright>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+
+    <description>Module for quickly &amp; easily creating lab environments using Hyper-V.</description>
+    <projectUrl>http://github.com/contoso/UsefulStuff</projectUrl>
+    <tags>
+        DesiredStateConfiguration
+        DSC
+        PSModule
+        PSFunction_Enter-LabVMSession
+        PSFunction_Get-LabDomain
+        PSFunction_Get-LabEnvironment
+        PSFunction_Get-LabMachine
+        PSFunction_New-LabEnvironment
+        PSFunction_New-LabVM
+        PSFunction_Publish-LabConfiguration
+        PSFunction_Register-LabEnvironment
+        PSFunction_Remove-LabVM
+        PSFunction_Set-LabEnvironment
+        PSFunction_Unregister-LabEnvironment
+        PSFunction_Update-LabHostShare
+    </tags>
+    <releaseNotes />
+  </metadata>
+
+  <files>
+    <file src="Files\**\*.*" target="Files" />
+    <file src="Functions\**\*.*" target="Functions" />
+    <file src="Internal\**\*.*" target="Internal" />
+    <file src="Classes.ps1" target="" />
+
+    <file src="HyperVLab.psd1" target="" />
+    <file src="HyperVLab.psm1" target="" />
+  </files>
+</package>
+
