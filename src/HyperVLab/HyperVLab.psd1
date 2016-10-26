@@ -94,23 +94,7 @@ PrivateData = @{
     PSData = @{
         ProjectUri = 'https://github.com/CodeblackNL/HyperVLab'
         LicenseUri = 'https://github.com/CodeblackNL/HyperVLab/blob/master/LICENSE'
-        Tags = 
-            'Hyper-V',
-            'Lab',
-            'VM',
-            'PSModule',
-            'PSFunction_Enter-LabVMSession',
-            'PSFunction_Get-LabDomain',
-            'PSFunction_Get-LabEnvironment',
-            'PSFunction_Get-LabMachine',
-            'PSFunction_New-LabEnvironment',
-            'PSFunction_New-LabVM',
-            'PSFunction_Publish-LabConfiguration',
-            'PSFunction_Register-LabEnvironment',
-            'PSFunction_Remove-LabVM',
-            'PSFunction_Set-LabEnvironment',
-            'PSFunction_Unregister-LabEnviro-nment',
-            'PSFunction_Update-LabHostShare'
+        Tags = @('Hyper-V', 'Lab', 'VM')
 
 
 #        IconUri = ''

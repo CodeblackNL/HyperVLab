@@ -8,24 +8,8 @@
     <copyright>(c) Jeroen Swart 2016. All rights reserved.</copyright>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>Module for quickly &amp; easily creating lab environments using Hyper-V.</description>
-    <projectUrl>http://github.com/contoso/UsefulStuff</projectUrl>
-    <tags>
-        DesiredStateConfiguration
-        DSC
-        PSModule
-        PSFunction_Enter-LabVMSession
-        PSFunction_Get-LabDomain
-        PSFunction_Get-LabEnvironment
-        PSFunction_Get-LabMachine
-        PSFunction_New-LabEnvironment
-        PSFunction_New-LabVM
-        PSFunction_Publish-LabConfiguration
-        PSFunction_Register-LabEnvironment
-        PSFunction_Remove-LabVM
-        PSFunction_Set-LabEnvironment
-        PSFunction_Unregister-LabEnvironment
-        PSFunction_Update-LabHostShare
-    </tags>
+    <projectUrl>https://github.com/CodeblackNL/HyperVLab</projectUrl>
+    <tags>Hyper-V Lab VM</tags>
     <releaseNotes />
   </metadata>
   <files>
