@@ -38,25 +38,22 @@ function Get-LabEnvironment {
 
         if (Test-Path -Path $environmentFilePath -PathType Leaf) {
             Write-Verbose "file '$environmentFilePath' found"
-            $environment = Convert-FromJsonObject -InputObject (Get-Content -Path $environmentFilePath -Raw | ConvertFrom-Json) -TypeName 'LabEnvironment'
+            $environmentContent = Get-Content -Path $environmentFilePath -Raw
+
+            $tokensFilePath = [System.IO.Path]::GetFullPath((Join-Path -Path (Split-Path -Path $environmentFilePath -Parent) -ChildPath 'tokens.json'))
+            if (Test-Path -Path $tokensFilePath -PathType Leaf) {
+                $tokens = Get-Content -Path $tokensFilePath -Raw | ConvertFrom-Json | Convert-PSObjectToHashtable
+                foreach ($key in $tokens.Keys) {
+                    try {
+                        $environmentContent = $environmentContent.Replace("{$key}", ($tokens.$key))
+                    }
+                    catch { }
+                }
+            }
+
+            $environment = Convert-FromJsonObject -InputObject ($environmentContent | ConvertFrom-Json) -TypeName 'LabEnvironment'
             if (-not $Name -or $Name -contains $environment.Name) {
                 $environment.Path = $environmentFilePath
-
-                if ($environment.TokensFilePath) {
-                    $tokensFilePath = $environment.TokensFilePath
-                    if ($tokensFilePath.StartsWith('.')) {
-                        $tokensFilePath = [System.IO.Path]::GetFullPath((Join-Path -Path (Split-Path -Path $environment.Path -Parent) -ChildPath $tokensFilePath))
-                    }
-
-                    if (Test-Path -Path $tokensFilePath -PathType Leaf) {
-                        try {
-                            $tokens = Get-Content -Path $tokensFilePath -Raw | ConvertFrom-Json | Convert-PSObjectToHashtable
-                            Merge-Token -InputObject $environment -Tokens $tokens
-                        }
-                        catch {
-                        }
-                    }
-                }
 
                 Write-Output $environment
             }

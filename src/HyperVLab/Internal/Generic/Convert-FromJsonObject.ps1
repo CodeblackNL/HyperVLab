@@ -17,7 +17,6 @@ function Convert-FromJsonObject {
             $environment = New-Object LabEnvironment -Property @{
                 Name = $InputObject.Name
                 Path = $InputObject.Path
-                TokensFilePath = $InputObject.TokensFilePath
                 MachinesPath = $InputObject.MachinesPath
                 FilesPath = $InputObject.FilesPath
                 ConfigurationFilePath = $InputObject.ConfigurationFilePath
