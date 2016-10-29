@@ -94,6 +94,7 @@ function New-LabVM {
             catch {
                 Write-Warning "if New-VM fails due to 'Logon failure: the user has not been granted the requested logon type at this computer'"
                 Write-Warning "execute 'Restart-Service Winmgmt -Force', and retry"
+                Write-Error "Failed to create VM."
             }
 
             Write-Verbose -Message '- configuring processors'
