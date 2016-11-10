@@ -116,9 +116,7 @@ function New-LabVM {
                 }
                 $index = 0
                 foreach ($disk in $m.Disks) {
-                    $diskPath = $null
-                    $sharedDisk = $false
-                    if ($disk.OperatingSystem) {
+                    if ($disk.Type -eq [LabDiskType]::OperatingSystem) {
                         if ($disk.OperatingSystem.FilePath.StartsWith('.')) {
                             $osPath = [System.IO.Path]::GetFullPath((Join-Path -Path $labPath -ChildPath $disk.OperatingSystem.FilePath))
                         }
@@ -147,19 +145,29 @@ function New-LabVM {
                             Write-Verbose -Message '    - copying disk'
                             Copy-Item -Path $osPath -Destination $diskPath
                         }
-                    }
-                    elseif ($disk.Size) {
-                        $sharedDisk = $disk.Shared
-                        $diskPath = [System.IO.Path]::Combine($pathHDDs, "$($vm.Name)_$index.vhdx")
-                        Write-Verbose -Message "  - creating new disk with size '$($disk.Size / 1GB)GB' at '$diskPath'"
-                        New-VHD -Path $diskPath –SizeBytes $disk.Size | Out-Null
-                    }
 
-                    if ($diskPath) {
                         Write-Verbose -Message "    - adding disk ($index)"
-                        Add-VMHardDiskDrive -VM $vm -ControllerType SCSI -ControllerNumber 0 -ControllerLocation $index -Path $diskPath -SupportPersistentReservations:$sharedDisk
+                        Add-VMHardDiskDrive -VM $vm -ControllerType SCSI -ControllerNumber 0 -ControllerLocation $index -Path $diskPath
+                        $index++
                     }
-                    $index++
+                    elseif ($disk.Type -eq [LabDiskType]::HardDisk) {
+                        $diskPath = [System.IO.Path]::Combine($pathHDDs, "$($vm.Name)_$index.vhdx")
+                        Write-Verbose -Message "  - creating new disk with size '$($disk.Size / 1GB)GB' at '$diskPath' $(if ($disk.Shared) { '(shared)' })"
+                        New-VHD -Path $diskPath –SizeBytes $disk.Size | Out-Null
+
+                        Write-Verbose -Message "    - adding disk ($index)"
+                        Add-VMHardDiskDrive -VM $vm -ControllerType SCSI -ControllerNumber 0 -ControllerLocation $index -Path $diskPath -SupportPersistentReservations:$disk.Shared
+                        $index++
+                    }
+                    elseif ($disk.Type -eq [LabDiskType]::DVDDrive) {
+                        if ($disk.ImageFilePath) {
+                            Add-VMDvdDrive -VM $vm -ControllerNumber 0 -ControllerLocation $index -Path $disk.ImageFilePath
+                        }
+                        else {
+                            Add-VMDvdDrive -VM $vm -ControllerNumber 0 -ControllerLocation $index
+                        }
+                        $index++
+                    }
                 }
             }
 
@@ -222,7 +230,7 @@ function New-LabVM {
                 Update-BootOrder -VM $vm -BootDrivePath $pathOSDisk
             }
 
-            $operatingSystem = ($m.Disks |? { $_.OperatingSystem } | Sort DriveLetter).OperatingSystem
+            $operatingSystem = ($m.Disks |? { $_.OperatingSystem }).OperatingSystem
             $unattendTemplateFilePath = $operatingSystem.UnattendFilePath
             if ($unattendTemplateFilePath) {
                 Write-Verbose -Message '- generating unattend file'

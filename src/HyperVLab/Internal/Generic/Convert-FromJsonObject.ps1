@@ -49,7 +49,6 @@ function Convert-FromJsonObject {
             $hostShare = New-Object LabHostShare -Property @{
                 Name = $InputObject.Name
                 Path = $InputObject.Path
-                DriveLetter = $InputObject.DriveLetter
                 UserName = $InputObject.UserName
             }
             if ($InputObject.Password) {
@@ -186,13 +185,29 @@ function Convert-FromJsonObject {
         }
         'LabDisk' {
             $disk = New-Object LabDisk -Property @{
-                DriveLetter = $(if ($InputObject.OperatingSystem) { 'C' } else { $InputObject.DriveLetter })
-                Size = $(if ($InputObject.Size) { Invoke-expression -Command $InputObject.Size })
                 DifferencingDisk = $InputObject.DifferencingDisk
                 UseEnvironmentCopy = $InputObject.UseEnvironmentCopy
+                Size = $(if ($InputObject.Size) { Invoke-expression -Command $InputObject.Size })
                 Shared = $InputObject.Shared
+                ImageFilePath = $InputObject.ImageFilePath
             }
+
             $disk.OperatingSystem = ($RootObject.OperatingSystems |? { $_.Name -eq $InputObject.OperatingSystem } | Select -First 1)
+
+            [LabDiskType]$type = [LabDiskType]::HardDisk
+            if (-not [LabDiskType]::TryParse($InputObject.Type, [ref]$type)) {
+                if ($disk.OperatingSystem) {
+                    $type = [LabDiskType]::OperatingSystem
+                }
+                elseif ($disk.ImageFilePath) {
+                    $type = [LabDiskType]::DVDDrive
+                }
+                else {
+                    $type = [LabDiskType]::HardDisk
+                }
+            }
+            $disk.Type = $type
+
             return $disk
         }
         'LabNetworkAdapter' {

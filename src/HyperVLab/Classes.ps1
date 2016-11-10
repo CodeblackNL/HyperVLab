@@ -234,21 +234,29 @@ class LabNetworkAdapter : LabObject {
     }
 }
 
+enum LabDiskType {
+    OperatingSystem
+    HardDisk
+    DVDDrive
+}
+
 class LabDisk : LabObject {
-    [string]$DriveLetter                       # optional; always replaced with 'C' if OperatingSystem is provided
+    [LabDiskType]$Type                         # optional; automatically set when OperatingSystem, Size (HardDisk) or ImageFilePath (DVDDrive) is provided
     [LabOperationSystem]$OperatingSystem       # optional
-    [bool]$DifferencingDisk                    # optional; only valid if OperatingSystem is provided, otherwise ignored
-    [bool]$UseEnvironmentCopy                  # optional; only valid if DifferencingDisk is true, otherwise ignored
-    [long]$Size                                # mandatory if OperatingSystem not provided, otherwise ignored
-    [bool]$Shared                              # optional; only valid if OperatingSystem is provided, otherwise ignored
+    [bool]$DifferencingDisk                    # optional; only valid for type OperatingSystem, otherwise ignored
+    [bool]$UseEnvironmentCopy                  # optional; only valid for type OperatingSystem, otherwise ignored
+    [long]$Size                                # mandatory for Type HardDisk, otherwise ignored
+    [bool]$Shared                              # optional; only valid for type HardDisk, otherwise ignored
+    [string]$ImageFilePath                     # optional; only valid for type DVDDrive, otherwise ignored
 
     [Hashtable] ToMachineConfiguration() {
         $hashtable = @{
-            DriveLetter = $this.DriveLetter
+            Type = $this.Type
             DifferencingDisk = $this.DifferencingDisk
             UseEnvironmentCopy = $this.UseEnvironmentCopy
             Size = $this.Size
             Shared = $this.Shared
+            ImageFilePath = $this.ImageFilePath
         }
 
         if ($this.OperatingSystem) {
@@ -260,11 +268,12 @@ class LabDisk : LabObject {
 
     [Hashtable] ToHashtable() {
         $hashtable = @{
-            DriveLetter = $this.DriveLetter
+            Type = $this.Type
             DifferencingDisk = $this.DifferencingDisk
             UseEnvironmentCopy = $this.UseEnvironmentCopy
             Size = $this.Size
             Shared = $this.Shared
+            ImageFilePath = $this.ImageFilePath
         }
 
         if ($this.OperatingSystem) {
