@@ -117,6 +117,7 @@ function New-LabVM {
                 $index = 0
                 foreach ($disk in $m.Disks) {
                     $diskPath = $null
+                    $sharedDisk = $false
                     if ($disk.OperatingSystem) {
                         if ($disk.OperatingSystem.FilePath.StartsWith('.')) {
                             $osPath = [System.IO.Path]::GetFullPath((Join-Path -Path $labPath -ChildPath $disk.OperatingSystem.FilePath))
@@ -148,6 +149,7 @@ function New-LabVM {
                         }
                     }
                     elseif ($disk.Size) {
+                        $sharedDisk = $disk.Shared
                         $diskPath = [System.IO.Path]::Combine($pathHDDs, "$($vm.Name)_$index.vhdx")
                         Write-Verbose -Message "  - creating new disk with size '$($disk.Size / 1GB)GB' at '$diskPath'"
                         New-VHD -Path $diskPath –SizeBytes $disk.Size | Out-Null
@@ -155,7 +157,7 @@ function New-LabVM {
 
                     if ($diskPath) {
                         Write-Verbose -Message "    - adding disk ($index)"
-                        Add-VMHardDiskDrive -VM $vm -ControllerType SCSI -ControllerNumber 0 -ControllerLocation $index -Path $diskPath
+                        Add-VMHardDiskDrive -VM $vm -ControllerType SCSI -ControllerNumber 0 -ControllerLocation $index -Path $diskPath -SupportPersistentReservations:$sharedDisk
                     }
                     $index++
                 }

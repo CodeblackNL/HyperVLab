@@ -179,10 +179,6 @@ function Convert-FromJsonObject {
             foreach ($propertyKey in $machine.Properties.Keys) {
                 $machine.AllProperties[$propertyKey] = $machine.Properties.$propertyKey
             }
-            #if ($RootObject -and $RootObject.Properties) {
-            #    $RootObject.Properties.Keys |% { "$_: $($RootObject.Properties.$_)" }
-            #    $machine.AllProperties = Convert-PSObjectToHashtable -InputObject $InputObject.Properties
-            #}
             $machine.Hardware = ($RootObject.Hardware |? { $_.Name -eq $InputObject.Hardware } | Select -First 1)
             $machine.Disks = ($InputObject.Disks |% { Convert-FromJsonObject -InputObject $_ -TypeName 'LabDisk' -RootObject $RootObject })
             $machine.NetworkAdapters = ($InputObject.NetworkAdapters |% { Convert-FromJsonObject -InputObject $_ -TypeName 'LabNetworkAdapter' -RootObject $RootObject })
@@ -194,6 +190,7 @@ function Convert-FromJsonObject {
                 Size = $(if ($InputObject.Size) { Invoke-expression -Command $InputObject.Size })
                 DifferencingDisk = $InputObject.DifferencingDisk
                 UseEnvironmentCopy = $InputObject.UseEnvironmentCopy
+                Shared = $InputObject.Shared
             }
             $disk.OperatingSystem = ($RootObject.OperatingSystems |? { $_.Name -eq $InputObject.OperatingSystem } | Select -First 1)
             return $disk

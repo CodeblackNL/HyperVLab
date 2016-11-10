@@ -240,6 +240,7 @@ class LabDisk : LabObject {
     [bool]$DifferencingDisk                    # optional; only valid if OperatingSystem is provided, otherwise ignored
     [bool]$UseEnvironmentCopy                  # optional; only valid if DifferencingDisk is true, otherwise ignored
     [long]$Size                                # mandatory if OperatingSystem not provided, otherwise ignored
+    [bool]$Shared                              # optional; only valid if OperatingSystem is provided, otherwise ignored
 
     [Hashtable] ToMachineConfiguration() {
         $hashtable = @{
@@ -247,6 +248,7 @@ class LabDisk : LabObject {
             DifferencingDisk = $this.DifferencingDisk
             UseEnvironmentCopy = $this.UseEnvironmentCopy
             Size = $this.Size
+            Shared = $this.Shared
         }
 
         if ($this.OperatingSystem) {
@@ -262,6 +264,7 @@ class LabDisk : LabObject {
             DifferencingDisk = $this.DifferencingDisk
             UseEnvironmentCopy = $this.UseEnvironmentCopy
             Size = $this.Size
+            Shared = $this.Shared
         }
 
         if ($this.OperatingSystem) {
