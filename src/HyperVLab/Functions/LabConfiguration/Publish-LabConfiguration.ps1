@@ -1,6 +1,7 @@
-#Requires -Version 5.0
+ï»¿#Requires -Version 5.0
 
 function Publish-LabConfiguration {
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSShouldProcess', '', Justification = 'TODO: implement ShouldProcess')]
     [CmdletBinding(DefaultParameterSetName = 'EnvironmentName_DscPullServer')]
     param (
         [Parameter(Mandatory = $true, ParameterSetName = 'Environment_DscPullServer', ValueFromPipeline = $true)]
@@ -54,7 +55,7 @@ function Publish-LabConfiguration {
         }
 
         if ($DscPullServer) {
-            $ComputerName = ($DscPullServer.NetworkAdapters.StaticIPAddress | Sort | Select -First 1)
+            $ComputerName = ($DscPullServer.NetworkAdapters.StaticIPAddress | Sort-Object | Select-Object -First 1)
             if (-not $ComputerName) {
                 $ComputerName = $DscPullServer.Name
             }
@@ -62,11 +63,11 @@ function Publish-LabConfiguration {
             $Credential = New-Object -TypeName PSCredential -ArgumentList "$($DscPullServer.Name)\Administrator",$DscPullServer.AdministratorPassword
         }
 
-        $groups = $Machine | Group -Property Environment
+        $groups = $Machine | Group-Object -Property Environment
         
         foreach ($group in $groups) {
             $machines = $group.Group
-            $e = $machines.Environment | Select -First 1
+            $e = $machines.Environment | Select-Object -First 1
             Write-Verbose "Machines for environment '$($e.Name)': $($machines.Name)"
 
             $configurationFilePath = $e.ConfigurationFilePath
@@ -90,7 +91,7 @@ function Publish-LabConfiguration {
 
                     Write-Verbose "Preparing configuration-data"
                     $configurationData = @{
-                        AllNodes = @($machines |% {
+                        AllNodes = @($machines | ForEach-Object {
                             #$m = Convert-PSObjectToHashtable -InputObject $_
                             $m = $_.ToHashtable()
                             $m.NodeName = $_.Name
@@ -118,8 +119,8 @@ function Publish-LabConfiguration {
 
                     Write-Verbose "Finding imported DSC-modules in configuration"
                     $content = get-content -Path $configurationFilePath -Encoding Ascii
-                    $moduleNames = $content |% {
-                        if ($_ -match 'Import[–-]DscResource [–-]ModuleName ''?(?<ModuleName>\w*)''?') {
+                    $moduleNames = $content | ForEach-Object {
+                        if ($_ -match 'Import[â€“-]DscResource [â€“-]ModuleName ''?(?<ModuleName>\w*)''?') {
                             $Matches.ModuleName
                         }
                     }

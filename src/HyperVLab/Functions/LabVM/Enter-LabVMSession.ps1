@@ -33,7 +33,7 @@ function Enter-LabVMSession {
     }
 
     if (-not $Credential) {
-        $domainNetwork = $Machine.NetworkAdapters.Network |? { $_.Domain } | Select -First 1
+        $domainNetwork = $Machine.NetworkAdapters.Network | Where-Object { $_.Domain } | Select-Object -First 1
         if ($domainNetwork) {
             $domain = $domainNetwork.Domain
             if ($domain.AdministratorPassword) {

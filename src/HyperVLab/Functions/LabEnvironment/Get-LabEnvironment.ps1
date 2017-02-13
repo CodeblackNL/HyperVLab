@@ -47,7 +47,9 @@ function Get-LabEnvironment {
                     try {
                         $environmentContent = $environmentContent.Replace("{$key}", ($tokens.$key))
                     }
-                    catch { }
+                    catch {
+                        Write-Warning -Message "Error replacing token '$key'."
+                    }
                 }
             }
 

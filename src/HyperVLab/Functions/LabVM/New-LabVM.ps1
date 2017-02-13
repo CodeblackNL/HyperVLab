@@ -1,6 +1,8 @@
-#Requires -Version 5.0
+ï»¿#Requires -Version 5.0
 
 function New-LabVM {
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseShouldProcessForStateChangingFunctions', '', Justification = 'TODO: implement ShouldProcess')]
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSShouldProcess', '', Justification = 'TODO: implement ShouldProcess')]
     [CmdletBinding(DefaultParameterSetName = 'MachineName')]
     param (
         [Parameter(Mandatory = $true, ParameterSetName = 'Machine', ValueFromPipeline = $true)]
@@ -70,7 +72,6 @@ function New-LabVM {
 
         foreach ($m in $Machine) {
             Write-Verbose -Message 'Starting creation of new lab-VM'
-            $labName = $m.Environment.Name
             $labPath = Split-Path -Path $m.Environment.Path -Parent
 
             # create new VM according to configuration
@@ -95,6 +96,7 @@ function New-LabVM {
                 Write-Warning "if New-VM fails due to 'Logon failure: the user has not been granted the requested logon type at this computer'"
                 Write-Warning "execute 'Restart-Service Winmgmt -Force', and retry"
                 Write-Error "Failed to create VM."
+                return
             }
 
             Write-Verbose -Message '- configuring processors'
@@ -153,7 +155,7 @@ function New-LabVM {
                     elseif ($disk.Type -eq [LabDiskType]::HardDisk) {
                         $diskPath = [System.IO.Path]::Combine($pathHDDs, "$($vm.Name)_$index.vhdx")
                         Write-Verbose -Message "  - creating new disk with size '$($disk.Size / 1GB)GB' at '$diskPath' $(if ($disk.Shared) { '(shared)' })"
-                        New-VHD -Path $diskPath –SizeBytes $disk.Size | Out-Null
+                        New-VHD -Path $diskPath â€“SizeBytes $disk.Size | Out-Null
 
                         Write-Verbose -Message "    - adding disk ($index)"
                         Add-VMHardDiskDrive -VM $vm -ControllerType SCSI -ControllerNumber 0 -ControllerLocation $index -Path $diskPath -SupportPersistentReservations:$disk.Shared
@@ -175,7 +177,7 @@ function New-LabVM {
                 Write-Verbose -Message '- configuring network'
                 Get-VMNetworkAdapter -VM $vm | Remove-VMNetworkAdapter
                 foreach($networkAdapter in $m.NetworkAdapters) {
-                    if ($networkAdapter.Enabled -eq $null -or $networkAdapter.Enabled) {
+                    if ($null -eq $networkAdapter.Enabled -or $networkAdapter.Enabled) {
                         $network = $networkAdapter.Network
                         # ensure VM-Switch exists, with correct settings
                         $switch = Get-VMSwitch -Name $network.SwitchName -ErrorAction SilentlyContinue
@@ -202,10 +204,10 @@ function New-LabVM {
                             $interfaceAlias = "vEthernet ($($network.SwitchName))"
                             $netIPAddress = Get-NetAdapter $interfaceAlias | Get-NetIPAddress -AddressFamily IPv4 -IPAddress $network.HostIPAddress -ErrorAction SilentlyContinue
                             if (-not $netIPAddress) {
-                                New-NetIPAddress –InterfaceAlias $interfaceAlias –IPAddress $network.HostIPAddress –PrefixLength $network.PrefixLength
+                                New-NetIPAddress â€“InterfaceAlias $interfaceAlias â€“IPAddress $network.HostIPAddress â€“PrefixLength $network.PrefixLength
                             }
                             elseif ($netIPAddress.PrefixLength -ne $network.PrefixLength) {
-                                Set-NetIPAddress –InterfaceAlias $interfaceAlias -PrefixLength $network.PrefixLength
+                                Set-NetIPAddress â€“InterfaceAlias $interfaceAlias -PrefixLength $network.PrefixLength
                             }
                         }
 
@@ -224,78 +226,81 @@ function New-LabVM {
                 }
             }
 
-            $pathOSDisk = (Get-VMHardDiskDrive -VM $vm |? { [System.IO.Path]::GetFileNameWithoutExtension($_.Path) -eq $m.Name } | Sort ControllerNumber,ControllerLocation | Select -First 1).Path
+            $pathOSDisk = (Get-VMHardDiskDrive -VM $vm `
+                | Where-Object { [System.IO.Path]::GetFileNameWithoutExtension($_.Path) -eq $m.Name } `
+                | Sort-Object ControllerNumber,ControllerLocation `
+                | Select-Object -First 1).Path
             if ($pathOSDisk) {
                 Write-Verbose -Message '- fixing boot-order to OS-disk'
                 Update-BootOrder -VM $vm -BootDrivePath $pathOSDisk
-            }
 
-            $operatingSystem = ($m.Disks |? { $_.OperatingSystem }).OperatingSystem
-            $unattendTemplateFilePath = $operatingSystem.UnattendFilePath
-            if ($unattendTemplateFilePath) {
-                Write-Verbose -Message '- generating unattend file'
-                if ($unattendTemplateFilePath.StartsWith('.')) {
-                    $unattendTemplateFilePath = [System.IO.Path]::GetFullPath((Join-Path -Path $labPath -ChildPath $unattendTemplateFilePath))
+                $operatingSystem = ($m.Disks | Where-Object { $_.OperatingSystem }).OperatingSystem
+                $unattendTemplateFilePath = $operatingSystem.UnattendFilePath
+                if ($unattendTemplateFilePath) {
+                    Write-Verbose -Message '- generating unattend file'
+                    if ($unattendTemplateFilePath.StartsWith('.')) {
+                        $unattendTemplateFilePath = [System.IO.Path]::GetFullPath((Join-Path -Path $labPath -ChildPath $unattendTemplateFilePath))
+                    }
+                    $administratorPassword = $null
+                    if ($m.AdministratorPassword) {
+                        $bstr = [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($m.AdministratorPassword)
+                        $plain = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto($bstr)
+                        $administratorPassword = [System.Convert]::ToBase64String([System.Text.Encoding]::Unicode.GetBytes("$($plain)AdministratorPassword"))
+                    }
+                    $unattendContent = New-UnattendXml -TemplateFilePath $unattendTemplateFilePath -Property @{
+                        ComputerName = $m.Name
+                        ProductKey = $operatingSystem.ProductKey
+                        TimeZone = $m.TimeZone
+                        AdministratorPassword = $administratorPassword
+                    }
                 }
-                $administratorPassword = $null
-                if ($m.AdministratorPassword) {
-                    $bstr = [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($m.AdministratorPassword)
-                    $plain = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto($bstr)
-                    $administratorPassword = [System.Convert]::ToBase64String([System.Text.Encoding]::Unicode.GetBytes("$($plain)AdministratorPassword"))
-                }
-                $unattendContent = New-UnattendXml -TemplateFilePath $unattendTemplateFilePath -Property @{
-                    ComputerName = $m.Name
-                    ProductKey = $operatingSystem.ProductKey
-                    TimeZone = $m.TimeZone
-                    AdministratorPassword = $administratorPassword
-                }
-            }
 
-            Write-Verbose -Message '- inserting files into virtual harddisk'
-            $configurationContent = (ConvertTo-Json -InputObject $m.ToMachineConfiguration() -Depth 9)
+                Write-Verbose -Message '- inserting files into virtual harddisk'
+                $configurationContent = (ConvertTo-Json -InputObject $m.ToMachineConfiguration() -Depth 9)
 
-            $filesToCopy = @(
-                @{
-                    Content = $unattendContent
-                    Destination = 'unattend.xml'
-                }
-                @{
-                    Content = $configurationContent
-                    Destination = 'Setup\configuration.json'
-                }
-                @{
-                    Source = "$PSScriptRoot\..\..\Files\*"
-                    Destination = ''
-                }
-            )
-            if ($m.Environment.FilesPath) {
-                if ($m.Environment.FilesPath.StartsWith('.')) {
-                    $filesPath = [System.IO.Path]::GetFullPath((Join-Path -Path $labPath -ChildPath $m.Environment.FilesPath))
-                }
-                else {
-                    $filesPath = $m.Environment.FilesPath
-                }
+                $filesToCopy = @(
+                    @{
+                        Content = $unattendContent
+                        Destination = 'unattend.xml'
+                    }
+                    @{
+                        Content = $configurationContent
+                        Destination = 'Setup\configuration.json'
+                    }
+                    @{
+                        Source = "$PSScriptRoot\..\..\Files\*"
+                        Destination = ''
+                    }
+                )
+                if ($m.Environment.FilesPath) {
+                    if ($m.Environment.FilesPath.StartsWith('.')) {
+                        $filesPath = [System.IO.Path]::GetFullPath((Join-Path -Path $labPath -ChildPath $m.Environment.FilesPath))
+                    }
+                    else {
+                        $filesPath = $m.Environment.FilesPath
+                    }
                 
-                $filesToCopy += @{
-                    Source = "$filesPath\*"
-                    Destination = ''
+                    $filesToCopy += @{
+                        Source = "$filesPath\*"
+                        Destination = ''
+                    }
                 }
-            }
-            if ($m.FilesPath) {
-                if ($m.FilesPath.StartsWith('.')) {
-                    $filesPath = [System.IO.Path]::GetFullPath((Join-Path -Path $labPath -ChildPath $m.FilesPath))
-                }
-                else {
-                    $filesPath = $m.FilesPath
-                }
+                if ($m.FilesPath) {
+                    if ($m.FilesPath.StartsWith('.')) {
+                        $filesPath = [System.IO.Path]::GetFullPath((Join-Path -Path $labPath -ChildPath $m.FilesPath))
+                    }
+                    else {
+                        $filesPath = $m.FilesPath
+                    }
                 
-                $filesToCopy += @{
-                    Source = "$filesPath\*"
-                    Destination = ''
+                    $filesToCopy += @{
+                        Source = "$filesPath\*"
+                        Destination = ''
+                    }
                 }
-            }
 
-            Add-FilesIntoVirtualHardDisk -Path $pathOSDisk -FilesToCopy $filesToCopy -ErrorAction Stop
+                Add-FilesIntoVirtualHardDisk -Path $pathOSDisk -FilesToCopy $filesToCopy -ErrorAction Stop
+            }
 
             if ($Start) {
                 Write-Verbose -Message "Starting lab-VM '$($m.Name)'"
@@ -303,7 +308,7 @@ function New-LabVM {
             }
         }
 
-        $environments = $Machine.Environment | Select -Unique
+        $environments = $Machine.Environment | Select-Object -Unique
         if ($environments) {
             foreach ($e in $environments) {
                 if ($e.Host -and $e.Host.Share) {

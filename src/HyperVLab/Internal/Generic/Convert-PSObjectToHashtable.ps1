@@ -1,6 +1,7 @@
 #Requires -Version 5.0
 
 function Convert-PSObjectToHashtable {
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSShouldProcess', '', Justification = 'Don''t use ShouldProcess in internal functions.')]
     param (
         [Parameter(  
              Position = 0,   
@@ -25,7 +26,7 @@ function Convert-PSObjectToHashtable {
     }
     elseif ($InputObject -is [psobject]) {
         $output = @{}
-        $InputObject | Get-Member -MemberType *Property | % { 
+        $InputObject | Get-Member -MemberType *Property | ForEach-Object { 
             $output.($_.name) = Convert-PSObjectToHashtable $InputObject.($_.name)
         } 
         $output

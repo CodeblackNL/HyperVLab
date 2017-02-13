@@ -42,9 +42,9 @@ function Remove-LabVMFromDomain {
         #       - provided DomainName exists for machine
 
         foreach ($m in $Machine) {
-            $domain = $m.NetworkAdapters.Network.Domain |? { $_ }
+            $domain = $m.NetworkAdapters.Network.Domain | Where-Object { $_ }
             if ($DomainName) {
-                $domain = $domain |? { $_.Name -eq $DomainName }
+                $domain = $domain | Where-Object { $_.Name -eq $DomainName }
                 if (-not $domain) {
                     Write-Error "No domain found for machine '$($m.Name)' with name '$DomainName'"
                 }
@@ -56,7 +56,7 @@ function Remove-LabVMFromDomain {
                 Write-Error "Mulptiple domains found for machine '$($m.Name)': '$($domain.Name)'"
             }
 
-            $networkAdapter = $m.NetworkAdapters |? { $_.Network.Domain.Name -eq $domain.Name }
+            $networkAdapter = $m.NetworkAdapters | Where-Object { $_.Network.Domain.Name -eq $domain.Name }
 
             # NOTE: this assumes there is a single domain-controller that is also the DNS-server
             $domainController = $domain.DnsServerIPAddress

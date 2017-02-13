@@ -16,15 +16,18 @@
 
 # Tools to use to package DSC modules and mof configuration document and publish them on enterprise DSC pull server in the required format
 function Publish-DscModuleAndMof {
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSShouldProcess', '', Justification = 'Don''t use ShouldProcess in internal functions.')]
     [CmdletBinding()]
     param (
         # The folder that contains the configuration mof documents. Everything in this folder will be packaged and published.
         [Parameter(Mandatory = $true)]
-        [string]$Path = $pwd, 
+        [string]$Path, 
         # Package and publish the modules listed in $ModuleNames based on PowerShell module path content.
         [string[]]$ModuleNames,
         [string]$ComputerName,
-        [PSCredential]$Credential
+        [PSCredential]
+        [System.Management.Automation.Credential()]
+        $Credential
     )
 
     function PackageModules {
@@ -144,13 +147,17 @@ function Publish-DscModuleAndMof {
             $session = New-PSSession -ComputerName $ComputerName
         }
 
-        PublishModules -Path $tempFolder -Session $session
+        if ($ModuleNames) {
+            PublishModules -Path $tempFolder -Session $session
+        }
         PublishMofDocuments -Path $tempFolder -Session $session
 
         Remove-PSSession -Session $session
     }
     else {
-        PublishModules -Path $tempFolder
+        if ($ModuleNames) {
+            PublishModules -Path $tempFolder
+        }
         PublishMofDocuments -Path $tempFolder
     }
 

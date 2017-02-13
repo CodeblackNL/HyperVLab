@@ -1,6 +1,8 @@
 #Requires -Version 5.0
 
 function Update-BootOrder {
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseShouldProcessForStateChangingFunctions', '', Justification = 'Don''t use ShouldProcess in internal functions.')]
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSShouldProcess', '', Justification = 'Don''t use ShouldProcess in internal functions.')]
     param (
         $VM,
         [string]$MachineName,

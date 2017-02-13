@@ -30,7 +30,7 @@ function Get-LabDomain
         {
             if ($e.Domains) {
                 foreach ($domain in $e.Domains) {
-                    if (-not $Name -or @($Name |? { $domain.Name -like $_ }).Length -gt 0)
+                    if (-not $Name -or @($Name | Where-Object { $domain.Name -like $_ }).Length -gt 0)
                     {
                         Write-Output $domain
                     }

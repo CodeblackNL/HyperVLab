@@ -29,7 +29,7 @@ function Get-LabMachine
         foreach ($e in $Environment) {
             if ($e.Machines) {
                 foreach ($machine in $e.Machines) {
-                    if (-not $Name -or @($Name |? { $machine.Name -like $_ }).Length -gt 0) {
+                    if (-not $Name -or @($Name | Where-Object { $machine.Name -like $_ }).Length -gt 0) {
                         Write-Output $machine
                     }
                 }

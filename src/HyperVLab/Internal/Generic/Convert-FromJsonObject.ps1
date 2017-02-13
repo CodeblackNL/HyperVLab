@@ -1,6 +1,9 @@
 #Requires -Version 5.0
 
 function Convert-FromJsonObject {
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSShouldProcess', '', Justification = 'Don''t use ShouldProcess in internal functions.')]
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingInvokeExpression', '', Justification = 'Invoke-Expression is used to convert GB-notation to an integer-value.')]
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingConvertToSecureStringWithPlainText', '', Justification = 'The passwords are coming from a file; conversion is necessary.')]
     param (
         [PSCustomObject]$InputObject,
         [string]$TypeName,
@@ -28,11 +31,11 @@ function Convert-FromJsonObject {
             if ($InputObject.Host) {
                 $environment.Host = Convert-FromJsonObject -InputObject $InputObject.Host -TypeName 'LabHost'
             }
-            $environment.Hardware = $InputObject.Hardware |% { Convert-FromJsonObject -InputObject $_ -TypeName 'LabHardware' -ParentObject $environment }
-            $environment.OperatingSystems = $InputObject.OperatingSystems |% { Convert-FromJsonObject -InputObject $_ -TypeName 'LabOperationSystem' -ParentObject $environment }
-            $environment.Domains = $InputObject.Domains |% { Convert-FromJsonObject -InputObject $_ -TypeName 'LabDomain' -ParentObject $environment }
-            $environment.Networks = $InputObject.Networks |% { Convert-FromJsonObject -InputObject $_ -TypeName 'LabNetwork' -RootObject $environment -ParentObject $environment }
-            $environment.Machines = $InputObject.Machines |% { Convert-FromJsonObject -InputObject $_ -TypeName 'LabMachine' -RootObject $environment -ParentObject $environment }
+            $environment.Hardware = $InputObject.Hardware | ForEach-Object { Convert-FromJsonObject -InputObject $_ -TypeName 'LabHardware' -ParentObject $environment }
+            $environment.OperatingSystems = $InputObject.OperatingSystems | ForEach-Object { Convert-FromJsonObject -InputObject $_ -TypeName 'LabOperationSystem' -ParentObject $environment }
+            $environment.Domains = $InputObject.Domains | ForEach-Object { Convert-FromJsonObject -InputObject $_ -TypeName 'LabDomain' -ParentObject $environment }
+            $environment.Networks = $InputObject.Networks | ForEach-Object { Convert-FromJsonObject -InputObject $_ -TypeName 'LabNetwork' -RootObject $environment -ParentObject $environment }
+            $environment.Machines = $InputObject.Machines | ForEach-Object { Convert-FromJsonObject -InputObject $_ -TypeName 'LabMachine' -RootObject $environment -ParentObject $environment }
             
             return $environment
         }
@@ -60,7 +63,9 @@ function Convert-FromJsonObject {
                         $hostShare.Password = $InputObject.Password | ConvertTo-SecureString -ErrorAction SilentlyContinue
                     }
                 }
-                catch { }
+                catch {
+                    Write-Warning -Message "Error reading the host-share password."
+                }
             }
             return $hostShare
         }
@@ -76,7 +81,7 @@ function Convert-FromJsonObject {
         'LabDomain' {
             $domain = New-Object LabDomain -Property @{
                 Name = $InputObject.Name
-                NetbiosName = $InputObject.Name
+                NetbiosName = $InputObject.NetbiosName
                 Environment = $ParentObject
             }
             if ($InputObject.AdministratorPassword) {
@@ -88,7 +93,9 @@ function Convert-FromJsonObject {
                         $domain.AdministratorPassword = $InputObject.AdministratorPassword | ConvertTo-SecureString -ErrorAction SilentlyContinue
                     }
                 }
-                catch { }
+                catch {
+                    Write-Warning -Message "Error reading the domain administrator password."
+                }
             }
             return $domain
         }
@@ -139,7 +146,7 @@ function Convert-FromJsonObject {
                 HostIPAddress = $InputObject.HostIPAddress
                 Environment = $ParentObject
             }
-            $network.Domain = ($RootObject.Domains |? { $_.Name -eq $InputObject.Domain } | Select -First 1)
+            $network.Domain = ($RootObject.Domains | Where-Object { $_.Name -eq $InputObject.Domain } | Select-Object -First 1)
             if ($InputObject.DnsServer) {
                 $network.DnsServer = Convert-FromJsonObject -InputObject $InputObject.DnsServer -TypeName 'LabDnsServer'
             }
@@ -166,10 +173,12 @@ function Convert-FromJsonObject {
                         $machine.AdministratorPassword = $InputObject.AdministratorPassword | ConvertTo-SecureString -ErrorAction SilentlyContinue
                     }
                 }
-                catch { }
+                catch {
+                    Write-Warning -Message "Error reading the machine administrator password."
+                }
             }
 
-            $machine.AllProperties = New-Object Hashtable
+            $machine.AllProperties = @{}
             if ($RootObject) {
                 foreach ($propertyKey in $RootObject.Properties.Keys) {
                     $machine.AllProperties[$propertyKey] = $RootObject.Properties.$propertyKey
@@ -178,9 +187,9 @@ function Convert-FromJsonObject {
             foreach ($propertyKey in $machine.Properties.Keys) {
                 $machine.AllProperties[$propertyKey] = $machine.Properties.$propertyKey
             }
-            $machine.Hardware = ($RootObject.Hardware |? { $_.Name -eq $InputObject.Hardware } | Select -First 1)
-            $machine.Disks = ($InputObject.Disks |% { Convert-FromJsonObject -InputObject $_ -TypeName 'LabDisk' -RootObject $RootObject })
-            $machine.NetworkAdapters = ($InputObject.NetworkAdapters |% { Convert-FromJsonObject -InputObject $_ -TypeName 'LabNetworkAdapter' -RootObject $RootObject })
+            $machine.Hardware = ($RootObject.Hardware | Where-Object { $_.Name -eq $InputObject.Hardware } | Select-Object -First 1)
+            $machine.Disks = ($InputObject.Disks | ForEach-Object { Convert-FromJsonObject -InputObject $_ -TypeName 'LabDisk' -RootObject $RootObject })
+            $machine.NetworkAdapters = ($InputObject.NetworkAdapters | ForEach-Object { Convert-FromJsonObject -InputObject $_ -TypeName 'LabNetworkAdapter' -RootObject $RootObject })
             return $machine
         }
         'LabDisk' {
@@ -192,7 +201,7 @@ function Convert-FromJsonObject {
                 ImageFilePath = $InputObject.ImageFilePath
             }
 
-            $disk.OperatingSystem = ($RootObject.OperatingSystems |? { $_.Name -eq $InputObject.OperatingSystem } | Select -First 1)
+            $disk.OperatingSystem = ($RootObject.OperatingSystems | Where-Object { $_.Name -eq $InputObject.OperatingSystem } | Select-Object -First 1)
 
             [LabDiskType]$type = [LabDiskType]::HardDisk
             if (-not [LabDiskType]::TryParse($InputObject.Type, [ref]$type)) {
@@ -215,7 +224,7 @@ function Convert-FromJsonObject {
                 StaticMacAddress = $InputObject.StaticMacAddress
                 StaticIPAddress = $InputObject.StaticIPAddress
             }
-            $networkAdapter.Network = ($RootObject.Networks |? { $_.Name -eq $InputObject.Network } | Select -First 1)
+            $networkAdapter.Network = ($RootObject.Networks | Where-Object { $_.Name -eq $InputObject.Network } | Select-Object -First 1)
             return $networkAdapter
         }
     }

@@ -9,8 +9,8 @@
 #>
 function Publish-MOFToPullServer
 {
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSShouldProcess', '', Justification = 'Don''t use ShouldProcess in internal functions.')]
     [CmdletBinding()]
-    [Alias("pcp")]
     [OutputType([void])]
     Param
     (
@@ -23,33 +23,28 @@ function Publish-MOFToPullServer
         $PullServerWebConfig = "$env:SystemDrive\inetpub\wwwroot\PSDSCPullServer\web.config"
     )
 
-    Begin
-    {
-       $webConfigXml = [xml](cat $PullServerWebConfig)
+    Begin {
+       $webConfigXml = [xml](Get-Content $PullServerWebConfig)
        $configXElement = $webConfigXml.SelectNodes("//appSettings/add[@key = 'ConfigurationPath']")
        $OutputFolderPath =  $configXElement.Value
     }
-    Process
-    {
+
+    Process {
         $fileInfo = [System.IO.FileInfo]::new($FullName)
-        if ($fileInfo.Extension -eq '.mof')
-        {
-            if (Test-Path $FullName)
-            {
-                copy $FullName $OutputFolderPath -Verbose -Force
+        if ($fileInfo.Extension -eq '.mof') {
+            if (Test-Path $FullName) {
+                Copy-Item -Path $FullName -Destination $OutputFolderPath -Verbose -Force
             }
-            else 
-            {
-                Throw "File not found at $FullName"
+            else {
+                throw "File not found at $FullName"
             } 
         }
-        else
-        {
+        else {
             throw "Invalid file $FullName. Only mof files can be copied to the pullserver configuration repository"
         }       
     }
-    End
-    {
+
+    End {
         New-DscChecksum -Path $OutputFolderPath -Force
     }
 }

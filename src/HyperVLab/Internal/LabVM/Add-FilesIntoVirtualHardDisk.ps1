@@ -1,6 +1,7 @@
 #Requires -Version 5.0
 
 function Add-FilesIntoVirtualHardDisk {
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSShouldProcess', '', Justification = 'Don''t use ShouldProcess in internal functions.')]
     param (
         [Parameter(Mandatory = $true)]
         [string]$Path,

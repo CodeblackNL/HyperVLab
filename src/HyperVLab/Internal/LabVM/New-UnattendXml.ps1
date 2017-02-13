@@ -1,4 +1,5 @@
 function New-UnattendXml {
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseShouldProcessForStateChangingFunctions', '', Justification = 'Don''t use ShouldProcess in internal functions.')]
     param (
         [string]$TemplateFilePath,
         [Hashtable]$Property,
@@ -11,7 +12,7 @@ function New-UnattendXml {
             [Hashtable]$Property
         )
 
-        $childElements = @($XmlNode.ChildNodes |? { $_.NodeType -eq 'Element' })
+        $childElements = @($XmlNode.ChildNodes | Where-Object { $_.NodeType -eq 'Element' })
         if ($childElements.Length -eq 0) {
             $regex = '({(.*)})'
             if ($XmlNode.InnerText -match $regex) {

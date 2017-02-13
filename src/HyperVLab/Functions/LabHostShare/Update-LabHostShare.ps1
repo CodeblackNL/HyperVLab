@@ -1,7 +1,8 @@
 #Requires -Version 5.0
 
-function Update-LabHostShare
-{
+function Update-LabHostShare {
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseShouldProcessForStateChangingFunctions', '', Justification = 'TODO: implement ShouldProcess')]
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSShouldProcess', '', Justification = 'TODO: implement ShouldProcess')]
     [CmdletBinding(DefaultParameterSetName = 'EnvironmentName')]
     param (
         [Parameter(Mandatory = $false, ParameterSetName = 'Environment', ValueFromPipeline = $true)]
@@ -17,22 +18,21 @@ function Update-LabHostShare
 
         function EnsureUser {
             param (
-                [string]$UserName,
-                [string]$Password
+                [PSCredential]$Credential
             )
 
             $rootPath = "WinNT://$($env:COMPUTERNAME)"
-            $userPath = "$rootPath/$UserName,User"
+            $userPath = "$rootPath/$($Credential.UserName),User"
             $user = [adsi]$userPath
             if (-not $user.Path) {
-                Write-Verbose -Message "Creating user '$UserName'."
-                $user = ([adsi]$rootPath).Create('User', $UserName)
-                $user.SetPassword($Password)
+                Write-Verbose -Message "Creating user '$($Credential.UserName)'."
+                $user = ([adsi]$rootPath).Create('User', $($Credential.UserName))
+                $user.SetPassword($Credential.GetNetworkCredential().Password)
                 $user.SetInfo()
             }
             else {
-                Write-Verbose -Message "Updating password for user '$UserName'."
-                $user.SetPassword($Password)
+                Write-Verbose -Message "Updating password for user '$($Credential.UserName)'."
+                $user.SetPassword($($Credential.GetNetworkCredential().Password))
                 $user.SetInfo()
             }
         }
@@ -49,14 +49,14 @@ function Update-LabHostShare
                 New-Item -Path $Path -ItemType Directory -Force
             }
 
-            if (-not (Get-WmiObject -Class Win32_Share -Filter "name='$Name'")) {
+            if (-not (Get-CimInstance -ClassName Win32_Share -Filter "name='$Name'")) {
                 Write-Verbose -Message "Sharing folder '$Path' as '$Name'."
-                (Get-WmiObject -Class Win32_Share -List).Create($Path, $Name, 0) | Out-Null
+                (Get-CimInstance -ClassName Win32_Share -List).Create($Path, $Name, 0) | Out-Null
             }
 
             Write-Verbose -Message "Ensuring folder '$Path' as '$Name'."
             $acl = Get-Acl -Path $Path
-            if (-not ($acl.Access |? { $_.IdentityReference -match "$($UserName)$" })) {
+            if (-not ($acl.Access | Where-obj { $_.IdentityReference -match "$($UserName)$" })) {
                 Write-Verbose -Message "Allow access to share '$Name' by '$UserName'."
                 $accessRule = New-Object System.Security.AccessControl.FileSystemAccessRule $UserName,'FullControl','Allow'
                 $acl.SetAccessRule($accessRule)
@@ -97,11 +97,10 @@ function Update-LabHostShare
                 $sharePath = $share.Path
             }
 
-            $bstr = [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($share.Password)
-            $password = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto($bstr)
+            $credential = New-Object -TypeName PSCredential -ArgumentList $share.UserName,$share.Password
 
-            EnsureUser -UserName $share.UserName -Password $password
-            EnsureShare -Name $share.Name -Path $sharePath -UserName $share.UserName
+            EnsureUser -Credential $credential
+            EnsureShare -Name $share.Name -Path $sharePath -UserName $credential.UserName
         }
     }
 }

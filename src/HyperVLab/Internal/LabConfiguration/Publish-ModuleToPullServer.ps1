@@ -10,8 +10,8 @@
 #>
 function Publish-ModuleToPullServer
 {
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSShouldProcess', '', Justification = 'Don''t use ShouldProcess in internal functions.')]
     [CmdletBinding()]
-    [Alias("pmp")]
     [OutputType([void])]
     Param
     (
@@ -38,39 +38,32 @@ function Publish-ModuleToPullServer
         $OutputFolderPath = $null
     )
 
-    Begin
-    {
-        if (-not($OutputFolderPath))
-        {
-            if ( -not(Test-Path $PullServerWebConfig))
-            {
+    Begin {
+        if (-not($OutputFolderPath)) {
+            if ( -not(Test-Path $PullServerWebConfig)) {
                 throw "Web.Config of the pullserver does not exist on the default path $PullServerWebConfig. Please provide the location of your pullserver web configuration using the parameter -PullServerWebConfig or an alternate path where you want to publish the pullserver modules to"
             }
-            else
-            {
+            else {
                 # Pull Server exist figure out the module path of the pullserver and use this value as output folder path.
-                $webConfigXml = [xml](cat $PullServerWebConfig)
+                $webConfigXml = [xml](Get-Content $PullServerWebConfig)
                 $moduleXElement = $webConfigXml.SelectNodes("//appSettings/add[@key = 'ModulePath']")
                 $OutputFolderPath =  $moduleXElement.Value
             }
         }
     }
-    Process
-    {
+    Process {
        Write-Verbose "Name: $Name , ModuleBase : $ModuleBase ,Version: $Version"
        $targetPath = Join-Path $OutputFolderPath "$($Name)_$($Version).zip"
 
-      if (Test-Path $targetPath)
-      {
+      if (Test-Path $targetPath) {
             Compress-Archive -DestinationPath $targetPath -Path "$($ModuleBase)\*" -Update -Verbose
       }
-      else
-      {
+      else {
             Compress-Archive -DestinationPath $targetPath -Path "$($ModuleBase)\*" -Verbose
       }
     }
-    End
-    {
+
+    End {
        # Now that all the modules are published generate thier checksum.
        New-DscChecksum -Path $OutputFolderPath
       

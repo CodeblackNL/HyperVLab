@@ -321,10 +321,10 @@ class LabMachine : LabObject {
             $hashtable.Hardware = $this.Hardware.ToMachineConfiguration()
         }
         if ($this.Disks) {
-            $hashtable.Disks = @($this.Disks |% { $_.ToMachineConfiguration() })
+            $hashtable.Disks = @($this.Disks | ForEach-Object { $_.ToMachineConfiguration() })
         }
         if ($this.NetworkAdapters) {
-            $hashtable.NetworkAdapters = @($this.NetworkAdapters |% { $_.ToMachineConfiguration() })
+            $hashtable.NetworkAdapters = @($this.NetworkAdapters | ForEach-Object { $_.ToMachineConfiguration() })
         }
         if ($this.Environment) {
             $hashtable.Environment = $this.Environment.ToMachineConfiguration()
@@ -367,10 +367,10 @@ class LabMachine : LabObject {
             $hashtable.Hardware = $this.Hardware.ToHashtable()
         }
         if ($this.Disks) {
-            $hashtable.Disks = @($this.Disks |% { $_.ToHashtable() })
+            $hashtable.Disks = @($this.Disks | ForEach-Object { $_.ToHashtable() })
         }
         if ($this.NetworkAdapters) {
-            $hashtable.NetworkAdapters = @($this.NetworkAdapters |% { $_.ToHashtable() })
+            $hashtable.NetworkAdapters = @($this.NetworkAdapters | ForEach-Object { $_.ToHashtable() })
         }
         if ($this.Environment) {
             $hashtable.Environment = $this.Environment.ToHashtable()

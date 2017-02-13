@@ -1,8 +1,8 @@
 #Requires -Version 5.0
 
-function New-LabEnvironment
-{
-    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseShouldProcessForStateChangingFunctions', 'Impact is low, no point in supporting ShouldProcess')]
+function New-LabEnvironment {
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseShouldProcessForStateChangingFunctions', '', Justification = 'TODO: implement ShouldProcess')]
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSShouldProcess', '', Justification = 'TODO: implement ShouldProcess')]
     param (
         [Parameter(Mandatory = $true)]
         [string]$Name,

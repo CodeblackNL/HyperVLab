@@ -1,8 +1,8 @@
 #Requires -Version 5.0
 
-function Set-LabEnvironment
-{
-    #[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseShouldProcessForStateChangingFunctions', 'Impact is low, no point in supporting ShouldProcess')]
+function Set-LabEnvironment {
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseShouldProcessForStateChangingFunctions', '', Justification = 'TODO: implement ShouldProcess')]
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSShouldProcess', '', Justification = 'TODO: implement ShouldProcess')]
     [CmdletBinding(DefaultParameterSetName = 'EnvironmentName')]
     param (
         [Parameter(Mandatory = $true, ParameterSetName = 'EnvironmentName')]
@@ -57,7 +57,7 @@ function Set-LabEnvironment
                     $e.Properties = {}
                 }
                 foreach ($key in $Properties.Keys) {
-                    if ($Properties.$key -ne $null) {
+                    if ($null -eq $Properties.$key) {
                         $e.Properties.$key = $Properties.$key
                     }
                     else {
