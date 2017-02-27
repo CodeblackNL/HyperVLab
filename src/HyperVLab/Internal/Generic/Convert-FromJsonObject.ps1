@@ -223,6 +223,7 @@ function Convert-FromJsonObject {
             $networkAdapter = New-Object LabNetworkAdapter -Property @{
                 StaticMacAddress = $InputObject.StaticMacAddress
                 StaticIPAddress = $InputObject.StaticIPAddress
+                DefaultGateway = $InputObject.DefaultGateway
             }
             $networkAdapter.Network = ($RootObject.Networks | Where-Object { $_.Name -eq $InputObject.Network } | Select-Object -First 1)
             return $networkAdapter
