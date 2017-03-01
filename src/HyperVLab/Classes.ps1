@@ -206,11 +206,13 @@ class LabNetworkAdapter : LabObject {
     [LabNetwork]$Network
     [string]$StaticMacAddress
     [string]$StaticIPAddress
+    [string]$DefaultGateway
 
     [Hashtable] ToMachineConfiguration() {
         $hashtable = @{
             StaticMacAddress = $this.StaticMacAddress
             StaticIPAddress = $this.StaticIPAddress
+            DefaultGateway = $this.DefaultGateway
         }
 
         if ($this.Network) {
@@ -224,6 +226,7 @@ class LabNetworkAdapter : LabObject {
         $hashtable = @{
             StaticMacAddress = $this.StaticMacAddress
             StaticIPAddress = $this.StaticIPAddress
+            DefaultGateway = $this.DefaultGateway
         }
 
         if ($this.Network) {

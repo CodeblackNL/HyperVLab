@@ -83,7 +83,7 @@ function Publish-DscModuleAndMof {
             return
         }
 
-        Write-Log -Scope $MyInvocation -Message "Copying modules and checksums to [$moduleRepository]."
+        Write-Log -Scope $MyInvocation -Message "Copying modules and checksums to [$moduleRepository]"
         if ($Session) {
             Copy-Item -Path "$Path\*.zip*" -Destination $moduleRepository -ToSession $Session -Force
         }
@@ -119,7 +119,7 @@ function Publish-DscModuleAndMof {
             return
         }
 
-        Write-Log -Scope $MyInvocation -Message "Copying mofs and checksums to [$moduleRepository]."
+        Write-Log -Scope $MyInvocation -Message "Copying mofs and checksums to [$mofRepository]"
         if ($Session) {
             Copy-Item -Path "$Path\*.mof*" -Destination $mofRepository -ToSession $Session -Force
         }

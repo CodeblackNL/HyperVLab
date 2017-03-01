@@ -51,12 +51,18 @@ function Update-LabHostShare {
 
             if (-not (Get-CimInstance -ClassName Win32_Share -Filter "name='$Name'")) {
                 Write-Verbose -Message "Sharing folder '$Path' as '$Name'."
-                (Get-CimInstance -ClassName Win32_Share -List).Create($Path, $Name, 0) | Out-Null
+                $arguments = @{
+                    Path = $Path
+                    Name = $Name
+                    Description = $Name
+                    Type = [uint32]0
+                }
+                Invoke-CimMethod -ClassName Win32_Share -MethodName Create -Arguments $arguments | Out-Null
             }
 
             Write-Verbose -Message "Ensuring folder '$Path' as '$Name'."
             $acl = Get-Acl -Path $Path
-            if (-not ($acl.Access | Where-obj { $_.IdentityReference -match "$($UserName)$" })) {
+            if (-not ($acl.Access | Where-Object { $_.IdentityReference -match "$($UserName)$" })) {
                 Write-Verbose -Message "Allow access to share '$Name' by '$UserName'."
                 $accessRule = New-Object System.Security.AccessControl.FileSystemAccessRule $UserName,'FullControl','Allow'
                 $acl.SetAccessRule($accessRule)
